@@ -158,7 +158,7 @@ export async function onRequest(context) {
         DB.prepare('SELECT key, value FROM profile').all(),
         DB.prepare('SELECT * FROM projects ORDER BY sort_order').all(),
         DB.prepare('SELECT * FROM articles ORDER BY created_at DESC').all(),
-        DB.prepare('SELECT id, hospital_name, role, note, created_at, last_access FROM passwords ORDER BY created_at').all(),
+        DB.prepare('SELECT id, hospital_name, code, role, note, created_at, last_access FROM passwords ORDER BY created_at').all(),
       ]);
 
       const profile = {};
