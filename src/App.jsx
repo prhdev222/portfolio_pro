@@ -287,6 +287,10 @@ function Portfolio({ password, role, hospital }) {
   const [data, setData] = useState(null);   // { profile, projects, articles, passwords }
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem("portfolio_lang") || "th"; }
+    catch { return "th"; }
+  });
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(""), 2500); };
 
@@ -385,8 +389,24 @@ function Portfolio({ password, role, hospital }) {
             }} className="tabs-btn">{t.label}</button>
           ))}
         </nav>
-        <div style={{ color:"rgba(255,255,255,.4)", fontSize:11 }}>
-          {hospital} {isAdmin && <span style={{ color:C.accent }}>· Admin</span>}
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ display:"flex", gap:4, background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.18)", padding:3, borderRadius:999 }}>
+            <button onClick={() => { setLang("th"); try { localStorage.setItem("portfolio_lang","th"); } catch {} }} style={{
+              border:"none", cursor:"pointer", borderRadius:999,
+              padding:"4px 10px", fontSize:11, fontFamily:"inherit",
+              background: lang==="th" ? C.teal : "transparent",
+              color: lang==="th" ? "#fff" : "rgba(255,255,255,.7)",
+            }}>TH</button>
+            <button onClick={() => { setLang("en"); try { localStorage.setItem("portfolio_lang","en"); } catch {} }} style={{
+              border:"none", cursor:"pointer", borderRadius:999,
+              padding:"4px 10px", fontSize:11, fontFamily:"inherit",
+              background: lang==="en" ? C.teal : "transparent",
+              color: lang==="en" ? "#fff" : "rgba(255,255,255,.7)",
+            }}>EN</button>
+          </div>
+          <div style={{ color:"rgba(255,255,255,.4)", fontSize:11, whiteSpace:"nowrap" }}>
+            {hospital} {isAdmin && <span style={{ color:C.accent }}>· Admin</span>}
+          </div>
         </div>
       </header>
 
@@ -394,7 +414,7 @@ function Portfolio({ password, role, hospital }) {
 
         {/* ── ABOUT ─────────────────────────────────────────────────── */}
         {tab === "about" && (
-          <AboutTab profile={profile} isAdmin={isAdmin} onSave={saveProfile} />
+          <AboutTab profile={profile} isAdmin={isAdmin} onSave={saveProfile} password={password} lang={lang} />
         )}
 
         {/* ── PROJECTS ──────────────────────────────────────────────── */}
@@ -424,13 +444,14 @@ function Portfolio({ password, role, hospital }) {
 }
 
 // ─── ABOUT TAB ───────────────────────────────────────────────────────────────
-function AboutTab({ profile: p, isAdmin, onSave }) {
+function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
   const [editing, setEditing] = useState(null); // { key, value }
   const [awardsEditing, setAwardsEditing] = useState(false);
   const [awardsDraft, setAwardsDraft] = useState([]);
   const [watching, setWatching] = useState(null); // { title, embedUrl }
   const [viewImg, setViewImg] = useState(null); // { src, title }
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [translating, setTranslating] = useState(null); // key
 
   const parseAwards = (raw) => {
     try {
@@ -442,7 +463,11 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   };
 
   const awards = parseAwards(p.awards);
-  const aboutName = splitNameLastWord(p.name || "");
+  const pick = (key) => {
+    if (lang === "en") return normalizeText(p[`${key}_en`]) || normalizeText(p[key]) || "";
+    return normalizeText(p[key]) || "";
+  };
+  const aboutName = splitNameLastWord(pick("name"));
   const fields = [
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
@@ -459,7 +484,37 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
     { key:"linkedin", label:"LinkedIn URL" },
     { key:"github", label:"GitHub" },
     { key:"interest", label:"ความสนใจ / ข้อเสนอ" },
+    { key:"interest_en", label:"Interest (English)" },
   ];
+
+  const translatableKeys = new Set([
+    "site_title",
+    "cover_name",
+    "cover_subtitle",
+    "header_name",
+    "header_tagline",
+    "name",
+    "education",
+    "work_history",
+    "headline",
+    "bio",
+    "bio2",
+    "bio3",
+    "interest",
+  ]);
+
+  const translateToEn = async (key) => {
+    setTranslating(key);
+    try {
+      const text = normalizeText(p[key] || "");
+      const r = await API("translate", { method:"POST", body: JSON.stringify({ text, target: "en" }) }, password);
+      if (r?.translation) {
+        await onSave(`${key}_en`, r.translation);
+      }
+    } finally {
+      setTranslating(null);
+    }
+  };
 
   const save = async () => {
     await onSave(editing.key, editing.value);
@@ -519,8 +574,8 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
             <span>{aboutName.first || "—"}</span>
             {aboutName.last ? <span className="name-last"> {aboutName.last}</span> : null}
           </h1>
-          <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{normalizeText(p.education) || ""}</div>
-          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{normalizeText(p.work_history) || ""}</div>
+          <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{pick("education")}</div>
+          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{pick("work_history")}</div>
         </div>
       </div>
 
@@ -632,7 +687,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         border:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:12,
       }} className="edit-wrap">
         <span style={{ fontSize:18 }}>💼</span>
-        <span style={{ color:C.blue, fontSize:14, fontStyle:"italic", flex:1 }}>{p.headline}</span>
+        <span style={{ color:C.blue, fontSize:14, fontStyle:"italic", flex:1 }}>{pick("headline")}</span>
         {isAdmin && btn("✏", () => setEditing({ key:"headline", value:p.headline || "" }), { background:C.teal, color:"#fff", className:"edit-btn" })}
       </div>
 
@@ -643,7 +698,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         </div>
         {["bio","bio2","bio3"].map((key,i) => (
           <div key={key} className="edit-wrap" style={{ display:"flex", gap:8, marginBottom:14, alignItems:"flex-start" }}>
-            <p style={{ color:"#374151", lineHeight:1.9, fontSize:14, margin:0, flex:1 }}>{p[key]}</p>
+            <p style={{ color:"#374151", lineHeight:1.9, fontSize:14, margin:0, flex:1 }}>{pick(key)}</p>
             {isAdmin && btn("✏", () => setEditing({ key, value:p[key]||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px" })}
           </div>
         ))}
@@ -769,7 +824,12 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
               <div key={f.key} style={{ display:"grid", gridTemplateColumns:"160px 1fr auto", gap:10, alignItems:"center" }}>
                 <div style={{ color:C.muted, fontSize:12 }}>{f.label}</div>
                 <div style={{ color:C.text, fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{normalizeText(p[f.key]) || "—"}</div>
-                {btn("แก้ไข", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:C.teal, color:"#fff", fontSize:11 })}
+                <div style={{ display:"flex", gap:6, justifyContent:"flex-end" }}>
+                  {translatableKeys.has(f.key) && !f.key.endsWith("_en") && (
+                    btn(translating === f.key ? "กำลังแปล…" : "แปล→EN", () => translateToEn(f.key), { background:C.blue, color:"#fff", fontSize:11 })
+                  )}
+                  {btn("แก้ไข", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:C.teal, color:"#fff", fontSize:11 })}
+                </div>
               </div>
             ))}
           </div>

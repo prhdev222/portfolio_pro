@@ -15,6 +15,54 @@ const json = (data, status = 200) =>
 const err = (msg, status = 400) =>
   new Response(JSON.stringify({ error: msg }), { status, headers: CORS });
 
+async function translateViaOpenRouter(env, { text, target = 'en' }) {
+  const apiKey = env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('Missing OPENROUTER_API_KEY');
+
+  const model = env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+  const referer = env.OPENROUTER_REFERER || 'https://portfolio-pro.pages.dev';
+  const title = env.OPENROUTER_APP_TITLE || 'portfolio-pro';
+
+  const prompt = [
+    `Translate the text to ${target}.`,
+    'Rules:',
+    '- Preserve meaning and professional tone.',
+    '- Keep proper nouns, hospital names, and acronyms as-is.',
+    '- Preserve bullet points and line breaks.',
+    '- Output ONLY the translated text (no quotes, no markdown).',
+    '',
+    'Text:',
+    text ?? '',
+  ].join('\n');
+
+  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': referer,
+      'X-Title': title,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: 'You are a precise bilingual translator.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.2,
+    }),
+  });
+
+  if (!r.ok) {
+    const msg = await r.text().catch(() => '');
+    throw new Error(`OpenRouter error ${r.status}: ${msg || r.statusText}`);
+  }
+  const data = await r.json();
+  const out = data?.choices?.[0]?.message?.content;
+  if (!out || typeof out !== 'string') throw new Error('Invalid translation response');
+  return out.trim();
+}
+
 // ─── Auth helper ───
 async function getAuth(request, DB) {
   const header = request.headers.get('Authorization') || '';
@@ -116,6 +164,13 @@ export async function onRequest(context) {
     // ── Admin write routes ──────────────────────────────────────────────
     const auth = await getAuth(request, DB);
     if (!auth || auth.role !== 'admin') return err('Admin only', 403);
+
+    // ── POST /api/translate (admin only) ────────────────────────────────
+    if (path === 'translate' && request.method === 'POST') {
+      const { text, target } = await request.json();
+      const translation = await translateViaOpenRouter(env, { text, target: target || 'en' });
+      return json({ translation });
+    }
 
     // PUT /api/profile/:key
     if (segments[0] === 'profile' && segments[1] && request.method === 'PUT') {

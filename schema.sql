@@ -51,26 +51,38 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('title',    'นายแพทย์ชำนาญการ · Hematologist'),
   ('hospital', 'กลุ่มงานอายุรศาสตร์ โรงพยาบาลสงฆ์ กรมการแพทย์'),
   ('site_title', 'Portfolio — พญ.อุรารี พรวรนันท์'),
+  ('site_title_en', 'Portfolio — Dr. Uraree Pornwranan'),
   ('cover_name', 'พญ.อุรารี พรวรนันท์'),
+  ('cover_name_en', 'Dr. Uraree Pornwranan'),
   ('cover_subtitle', 'Hematologist · Clinical Digital Health Developer'),
+  ('cover_subtitle_en', 'Hematologist · Clinical Digital Health Developer'),
   ('avatar_url', ''),
   ('booking_url', 'https://calendar.app.google/gekwdUmq2j6bfWW27'),
   ('header_name', 'พญ.อุรารี พรวรนันท์'),
+  ('header_name_en', 'Dr. Uraree Pornwranan'),
   ('header_tagline', 'HEMATOLOGIST · DIGITAL HEALTH'),
+  ('header_tagline_en', 'HEMATOLOGIST · DIGITAL HEALTH'),
   ('education', '• แพทยศาสตร์บัณฑิต (มหิดล)
 • วุฒิบัตรอายุรศาสตร์
 • อนุสาขาโลหิตวิทยา (ศิริราช)'),
+  ('education_en', ''),
   ('work_history', '• นายแพทย์ชำนาญการ โรงพยาบาลสงฆ์ กรมการแพทย์
 • Clinical Digital Health Developer (Health Tech Tools)'),
+  ('work_history_en', ''),
   ('awards', '[{\"title\":\"ตัวอย่างผลงาน/รางวัล\",\"url\":\"https://example.com\",\"image\":\"\",\"tags\":[\"press\",\"publication\"]}]'),
   ('headline', 'Hematologist | Clinical Digital Health Developer | Health Tech Tools for Real-world Practice'),
+  ('headline_en', 'Hematologist | Clinical Digital Health Developer | Health Tech Tools for Real-world Practice'),
   ('bio',      'แพทย์ผู้เชี่ยวชาญด้านโลหิตวิทยา จบแพทยศาสตร์บัณฑิตมหาวิทยาลัยมหิดล ฝึกอบรมเฉพาะทางโลหิตวิทยาที่โรงพยาบาลศิริราช ปัจจุบันดำรงตำแหน่งนายแพทย์ชำนาญการ โรงพยาบาลสงฆ์ กรมการแพทย์ กระทรวงสาธารณสุข'),
+  ('bio_en',   ''),
   ('bio2',     'นอกจากงานคลินิก ยังพัฒนา web applications สำหรับการตัดสินใจทางคลินิก การศึกษา และการบริหารงานในโรงพยาบาล ตั้งแต่ Stroke AI tools, Anticoagulation suite, CML management platform จนถึงระบบ queue management สำหรับพระภิกษุสงฆ์'),
+  ('bio2_en',  ''),
   ('bio3',     'กำลังศึกษาหลักสูตร DigiHealth Program จุฬาลงกรณ์มหาวิทยาลัย เพื่อพัฒนาความเชี่ยวชาญด้าน Health Technology อย่างเป็นระบบ'),
+  ('bio3_en',  ''),
   ('email',    ''),
   ('linkedin', ''),
   ('github',   'prhdev222'),
-  ('interest', 'สนใจโอกาสด้าน Clinical Digital Health, Health Tech Consulting และ Medical Informatics');
+  ('interest', 'สนใจโอกาสด้าน Clinical Digital Health, Health Tech Consulting และ Medical Informatics'),
+  ('interest_en', 'Open to opportunities in Clinical Digital Health, Health Tech Consulting, and Medical Informatics');
 
 -- ─── Seed: Projects ───
 INSERT OR IGNORE INTO projects (title, url, description, tags, color, sort_order) VALUES
