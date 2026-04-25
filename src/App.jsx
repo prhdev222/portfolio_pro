@@ -65,6 +65,14 @@ function EditOverlay({ title, children, onClose }) {
 const normalizeText = (v) =>
   typeof v === "string" ? v.replaceAll("\\n", "\n") : v;
 
+const splitNameLastWord = (name) => {
+  if (typeof name !== "string") return { first: "", last: "" };
+  const trimmed = name.trim();
+  const idx = trimmed.lastIndexOf(" ");
+  if (idx <= 0) return { first: trimmed, last: "" };
+  return { first: trimmed.slice(0, idx), last: trimmed.slice(idx + 1) };
+};
+
 // ─── LOCK SCREEN ─────────────────────────────────────────────────────────────
 function LockScreen({ onUnlock }) {
   const [pw, setPw] = useState("");
@@ -87,6 +95,8 @@ function LockScreen({ onUnlock }) {
     const t = publicProfile?.site_title;
     if (t) document.title = t;
   }, [publicProfile]);
+
+  const lockName = splitNameLastWord(publicProfile?.cover_name || publicProfile?.name || "");
 
   const attempt = async () => {
     if (!pw.trim() || loading) return;
@@ -122,6 +132,13 @@ function LockScreen({ onUnlock }) {
         @keyframes ripple { 0%{transform:scale(0.8);opacity:.4} 100%{transform:scale(2.5);opacity:0} }
         @keyframes pulse { 0%,100%{opacity:.06} 50%{opacity:.13} }
         .lock-ring { animation: pulse 3s ease-in-out infinite; }
+        @media (max-width: 640px) {
+          .lock-wrap { max-width: 360px !important; }
+          .lock-title { font-size: 26px !important; }
+          .lock-sub { font-size: 12px !important; margin-bottom: 28px !important; }
+          .lock-input { padding: 12px 14px !important; font-size: 14px !important; }
+          .name-last { display: block; }
+        }
       `}</style>
 
       {/* Background rings */}
@@ -133,7 +150,7 @@ function LockScreen({ onUnlock }) {
         }}/>
       ))}
 
-      <div style={{ animation: "fadeUp .8s ease both", textAlign:"center", zIndex:1, padding:"0 24px", width:"100%", maxWidth:400 }}>
+      <div className="lock-wrap" style={{ animation: "fadeUp .8s ease both", textAlign:"center", zIndex:1, padding:"0 24px", width:"100%", maxWidth:400 }}>
         <div style={{
           width:96, height:96, borderRadius:18, margin:"0 auto 24px",
           background:"rgba(255,255,255,.10)", border:"1px solid rgba(255,255,255,.25)",
@@ -151,10 +168,11 @@ function LockScreen({ onUnlock }) {
         </div>
 
         <div style={{ color:"rgba(255,255,255,.5)", fontSize:11, letterSpacing:4, marginBottom:8, textTransform:"uppercase" }}>Private Portfolio</div>
-        <h1 style={{ fontFamily:"'Cormorant Garamond', Georgia", color:"#fff", fontSize:30, fontWeight:400, margin:"0 0 4px" }}>
-          {publicProfile?.cover_name || publicProfile?.name || "—"}
+        <h1 className="lock-title" style={{ fontFamily:"'Cormorant Garamond', Georgia", color:"#fff", fontSize:30, fontWeight:400, margin:"0 0 4px", lineHeight:1.15 }}>
+          <span>{lockName.first || "—"}</span>
+          {lockName.last ? <span className="name-last"> {lockName.last}</span> : null}
         </h1>
-        <div style={{ color:C.accent, fontSize:13, marginBottom:36, letterSpacing:.5 }}>
+        <div className="lock-sub" style={{ color:C.accent, fontSize:13, marginBottom:36, letterSpacing:.5 }}>
           {publicProfile?.cover_subtitle || publicProfile?.title || ""}
         </div>
 
@@ -171,6 +189,7 @@ function LockScreen({ onUnlock }) {
             onKeyDown={e => e.key === "Enter" && attempt()}
             placeholder="Enter password"
             autoFocus
+            className="lock-input"
             style={{
               flex:1, padding:"14px 16px", background:"transparent", border:"none",
               outline:"none", color:"#fff", fontSize:15, fontFamily:"monospace", letterSpacing:2,
@@ -250,6 +269,22 @@ function Portfolio({ password, role, hospital }) {
         .edit-btn { opacity:0; transition:opacity .2s; }
         .edit-wrap:hover .edit-btn { opacity:1; }
         input:focus, textarea:focus { border-color:${C.teal}!important; box-shadow:0 0 0 3px rgba(12,123,147,.12); }
+        @media (max-width: 820px) {
+          .main-wrap { padding: 28px 16px !important; }
+          .nav-wrap { overflow-x: auto; scrollbar-width: none; }
+          .nav-wrap::-webkit-scrollbar { display: none; }
+        }
+        @media (max-width: 640px) {
+          .topbar { padding: 0 14px !important; height: 56px !important; }
+          .brand-title { font-size: 12px !important; }
+          .brand-tagline { font-size: 9px !important; letter-spacing: .8px !important; }
+          .tabs-btn { padding: 6px 10px !important; font-size: 11px !important; }
+          .hero { flex-direction: column !important; align-items: flex-start !important; padding: 26px 20px !important; gap: 16px !important; }
+          .hero-avatar { width: 104px !important; height: 104px !important; border-radius: 20px !important; }
+          .projects-grid { grid-template-columns: 1fr !important; }
+          .card-img { height: 150px !important; }
+          .name-last { display: block; }
+        }
       `}</style>
 
       {/* Toast */}
@@ -266,22 +301,22 @@ function Portfolio({ password, role, hospital }) {
         background:C.navy, height:60, display:"flex", alignItems:"center",
         justifyContent:"space-between", padding:"0 32px",
         position:"sticky", top:0, zIndex:100, boxShadow:"0 2px 16px rgba(0,0,0,.3)",
-      }}>
+      }} className="topbar">
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <span style={{ fontSize:20 }}>🩺</span>
           <div>
-            <div style={{ color:"#fff", fontSize:13, fontWeight:600 }}>{profile.header_name || profile.name || "—"}</div>
-            <div style={{ color:C.accent, fontSize:10, letterSpacing:1 }}>{profile.header_tagline || ""}</div>
+            <div className="brand-title" style={{ color:"#fff", fontSize:13, fontWeight:600 }}>{profile.header_name || profile.name || "—"}</div>
+            <div className="brand-tagline" style={{ color:C.accent, fontSize:10, letterSpacing:1 }}>{profile.header_tagline || ""}</div>
           </div>
         </div>
-        <nav style={{ display:"flex", gap:4 }}>
+        <nav className="nav-wrap" style={{ display:"flex", gap:4 }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               background: tab===t.id ? C.teal : "transparent",
               border:"none", color: tab===t.id ? "#fff" : "rgba(255,255,255,.6)",
               padding:"6px 14px", borderRadius:6, cursor:"pointer",
               fontSize:12, fontFamily:"'Sarabun',Georgia,serif", transition:"all .2s",
-            }}>{t.label}</button>
+            }} className="tabs-btn">{t.label}</button>
           ))}
         </nav>
         <div style={{ color:"rgba(255,255,255,.4)", fontSize:11 }}>
@@ -289,7 +324,7 @@ function Portfolio({ password, role, hospital }) {
         </div>
       </header>
 
-      <main style={{ maxWidth:980, margin:"0 auto", padding:"36px 24px", animation:"fadeUp .4s ease" }} key={tab}>
+      <main className="main-wrap" style={{ maxWidth:980, margin:"0 auto", padding:"36px 24px", animation:"fadeUp .4s ease" }} key={tab}>
 
         {/* ── ABOUT ─────────────────────────────────────────────────── */}
         {tab === "about" && (
@@ -338,6 +373,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   };
 
   const awards = parseAwards(p.awards);
+  const aboutName = splitNameLastWord(p.name || "");
   const fields = [
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
@@ -390,14 +426,14 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         background:`linear-gradient(135deg,${C.navy},${C.teal})`,
         borderRadius:20, padding:"40px 48px", marginBottom:28,
         display:"flex", gap:36, alignItems:"center",
-      }}>
+      }} className="hero">
         <div style={{
           width:124, height:124, borderRadius:22,
           background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.28)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:44, flexShrink:0,
           overflow:"hidden",
           boxShadow:"0 18px 48px rgba(0,0,0,.25)",
-        }}>
+        }} className="hero-avatar">
           {p.avatar_url ? (
             <img
               src={p.avatar_url}
@@ -408,7 +444,10 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         </div>
         <div>
           <div style={{ color:C.accent, fontSize:11, letterSpacing:3, marginBottom:6, textTransform:"uppercase" }}>Private Portfolio</div>
-          <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400 }}>{p.name || "—"}</h1>
+          <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400, lineHeight:1.12 }}>
+            <span>{aboutName.first || "—"}</span>
+            {aboutName.last ? <span className="name-last"> {aboutName.last}</span> : null}
+          </h1>
           <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{normalizeText(p.education) || ""}</div>
           <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{normalizeText(p.work_history) || ""}</div>
         </div>
@@ -636,7 +675,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
         {isAdmin && btn("+ เพิ่ม Project", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
+      <div className="projects-grid" style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
         {visible.map(p => (
           <div key={p.id} className="card" style={{
             background:"#fff", borderRadius:18, overflow:"hidden",
@@ -646,7 +685,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
             <div style={{ height:4, background:`linear-gradient(90deg, ${p.color || C.teal}, ${C.navy})` }} />
 
             {p.image_url ? (
-              <div style={{ position:"relative", height:170, background:"#0b1220" }}>
+              <div className="card-img" style={{ position:"relative", height:170, background:"#0b1220" }}>
                 <img
                   src={p.image_url}
                   alt=""
