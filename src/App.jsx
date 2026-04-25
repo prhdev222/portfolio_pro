@@ -312,11 +312,25 @@ function Portfolio({ password, role, hospital }) {
 // ─── ABOUT TAB ───────────────────────────────────────────────────────────────
 function AboutTab({ profile: p, isAdmin, onSave }) {
   const [editing, setEditing] = useState(null); // { key, value }
+  const [awardsEditing, setAwardsEditing] = useState(false);
+  const [awardsDraft, setAwardsDraft] = useState([]);
+
+  const parseAwards = (raw) => {
+    try {
+      const v = JSON.parse(raw || "[]");
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const awards = parseAwards(p.awards);
   const fields = [
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
-    { key:"title", label:"ตำแหน่ง" },
-    { key:"hospital", label:"สถานที่ทำงาน" },
+    { key:"education", label:"ประวัติการศึกษา" },
+    { key:"work_history", label:"ประวัติการทำงาน" },
+    { key:"awards", label:"ผลงานที่เคยได้รับ" },
     { key:"headline", label:"LinkedIn Headline" },
     { key:"bio", label:"ประวัติย่อ (ย่อหน้า 1)" },
     { key:"bio2", label:"ประวัติย่อ (ย่อหน้า 2)" },
@@ -330,6 +344,29 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   const save = async () => {
     await onSave(editing.key, editing.value);
     setEditing(null);
+  };
+
+  const openAwardsEditor = () => {
+    setAwardsDraft(awards.map(a => ({
+      title: a?.title || "",
+      url: a?.url || "",
+      image: a?.image || "",
+      tags: Array.isArray(a?.tags) ? a.tags.join(", ") : (a?.tags || ""),
+    })));
+    setAwardsEditing(true);
+  };
+
+  const saveAwards = async () => {
+    const normalized = awardsDraft
+      .map(a => ({
+        title: (a.title || "").trim(),
+        url: (a.url || "").trim(),
+        image: (a.image || "").trim(),
+        tags: (a.tags || "").split(",").map(t => t.trim()).filter(Boolean),
+      }))
+      .filter(a => a.title || a.url || a.image || a.tags.length);
+    await onSave("awards", JSON.stringify(normalized));
+    setAwardsEditing(false);
   };
 
   return (
@@ -348,10 +385,104 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         <div>
           <div style={{ color:C.accent, fontSize:11, letterSpacing:3, marginBottom:6, textTransform:"uppercase" }}>Private Portfolio</div>
           <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400 }}>{p.name || "—"}</h1>
-          <div style={{ color:"rgba(255,255,255,.85)", fontSize:15, marginBottom:10 }}>{p.title}</div>
-          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13 }}>{p.hospital}</div>
+          <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{p.education || ""}</div>
+          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{p.work_history || ""}</div>
         </div>
       </div>
+
+      {/* Awards */}
+      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
+          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>ผลงานที่เคยได้รับ</h2>
+          {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
+        </div>
+        {awards.length === 0 ? (
+          <div style={{ color:C.muted, fontSize:13 }}>ยังไม่มีข้อมูล</div>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {awards.map((a, i) => (
+              <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
+                {a?.image ? (
+                  <img src={a.image} alt="" style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}` }} />
+                ) : (
+                  <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
+                )}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text, marginBottom:4, wordBreak:"break-word" }}>
+                    {a?.url ? (
+                      <a href={a.url} target="_blank" rel="noreferrer" style={{ color:C.blue, textDecoration:"none" }}>{a.title || a.url}</a>
+                    ) : (
+                      (a?.title || "—")
+                    )}
+                  </div>
+                  {Array.isArray(a?.tags) && a.tags.length > 0 && (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {a.tags.map((t, ti) => (
+                        <span key={ti} style={{ fontSize:11, padding:"2px 10px", borderRadius:999, background:"rgba(12,123,147,.08)", color:C.teal, fontFamily:"monospace" }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {a?.url && (
+                  <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none", flexShrink:0 }}>
+                    Link ↗
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Awards editor modal */}
+      {awardsEditing && (
+        <EditOverlay title="แก้ไข: ผลงานที่เคยได้รับ" onClose={() => setAwardsEditing(false)}>
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {awardsDraft.length === 0 ? (
+              <div style={{ color:C.muted, fontSize:13 }}>ยังไม่มีรายการ — กด “+ เพิ่มผลงาน” เพื่อเริ่ม</div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+                {awardsDraft.map((a, idx) => (
+                  <div key={idx} style={{ border:`1px solid ${C.border}`, borderRadius:12, padding:14, background:"#F8FAFC" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                      <div style={{ fontSize:12, color:C.muted, fontWeight:600 }}>รายการ #{idx + 1}</div>
+                      {btn("ลบ", () => setAwardsDraft(list => list.filter((_, i) => i !== idx)), { background:C.danger, color:"#fff", fontSize:11, padding:"4px 10px" })}
+                    </div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                      <div>
+                        <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>ชื่อผลงาน/รางวัล</div>
+                        {inp(a.title, v => setAwardsDraft(list => list.map((x,i)=> i===idx ? ({...x,title:v}) : x)), "เช่น Best Poster Award")}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>URL (ถ้ามี)</div>
+                        {inp(a.url, v => setAwardsDraft(list => list.map((x,i)=> i===idx ? ({...x,url:v}) : x)), "https://...")}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>รูป (URL รูปภาพ ถ้ามี)</div>
+                        {inp(a.image, v => setAwardsDraft(list => list.map((x,i)=> i===idx ? ({...x,image:v}) : x)), "https://...jpg")}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Tags (คั่นด้วย , )</div>
+                        {inp(a.tags, v => setAwardsDraft(list => list.map((x,i)=> i===idx ? ({...x,tags:v}) : x)), "press, publication")}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginTop:4 }}>
+              {btn("+ เพิ่มผลงาน", () => setAwardsDraft(list => [...list, { title:"", url:"", image:"", tags:"" }]), { background:C.blue, color:"#fff", fontSize:12 })}
+              <div style={{ display:"flex", gap:8 }}>
+                {btn("ยกเลิก", () => setAwardsEditing(false), { background:"#F1F5F9", color:C.muted })}
+                {btn("บันทึก", saveAwards, { background:C.teal, color:"#fff" })}
+              </div>
+            </div>
+          </div>
+        </EditOverlay>
+      )}
 
       {/* Headline */}
       <div style={{
