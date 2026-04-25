@@ -293,6 +293,7 @@ function Portfolio({ password, role, hospital }) {
   });
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(""), 2500); };
+  const isEn = lang === "en";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -311,12 +312,12 @@ function Portfolio({ password, role, hospital }) {
   const saveProfile = async (key, value) => {
     await API(`profile/${key}`, { method: "PUT", body: JSON.stringify({ value }) }, password);
     setData(d => ({ ...d, profile: { ...d.profile, [key]: value } }));
-    showToast("✓ บันทึกแล้ว");
+    showToast(isEn ? "✓ Saved" : "✓ บันทึกแล้ว");
   };
 
   if (loading) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:C.bg, fontFamily:"'Sarabun',Georgia,serif" }}>
-      <div style={{ color:C.teal, fontSize:14 }}>กำลังโหลด…</div>
+      <div style={{ color:C.teal, fontSize:14 }}>{isEn ? "Loading…" : "กำลังโหลด…"}</div>
     </div>
   );
 
@@ -325,7 +326,7 @@ function Portfolio({ password, role, hospital }) {
   const TABS = [
     { id:"about", label:"About" },
     { id:"projects", label:`Projects (${projects.filter(p=>p.visible).length})` },
-    { id:"articles", label:`บทความ (${articles.filter(a=>a.published).length})` },
+    { id:"articles", label:`${isEn ? "Articles" : "บทความ"} (${articles.filter(a=>a.published).length})` },
     ...(isAdmin ? [{ id:"admin", label:"⚙ Admin" }] : []),
   ];
 
@@ -375,8 +376,14 @@ function Portfolio({ password, role, hospital }) {
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <span style={{ fontSize:20 }}>🩺</span>
           <div>
-            <div className="brand-title" style={{ color:"#fff", fontSize:13, fontWeight:600 }}>{profile.header_name || profile.name || "—"}</div>
-            <div className="brand-tagline" style={{ color:C.accent, fontSize:10, letterSpacing:1 }}>{profile.header_tagline || ""}</div>
+            <div className="brand-title" style={{ color:"#fff", fontSize:13, fontWeight:600 }}>
+              {(isEn ? (profile.header_name_en || "").trim() : (profile.header_name || "").trim())
+                || (isEn ? (profile.name_en || "").trim() : (profile.name || "").trim())
+                || "—"}
+            </div>
+            <div className="brand-tagline" style={{ color:C.accent, fontSize:10, letterSpacing:1 }}>
+              {(isEn ? (profile.header_tagline_en || "").trim() : (profile.header_tagline || "").trim()) || ""}
+            </div>
           </div>
         </div>
         <nav className="nav-wrap" style={{ display:"flex", gap:4 }}>
@@ -419,13 +426,13 @@ function Portfolio({ password, role, hospital }) {
 
         {/* ── PROJECTS ──────────────────────────────────────────────── */}
         {tab === "projects" && (
-          <ProjectsTab projects={projects} isAdmin={isAdmin} password={password}
+          <ProjectsTab projects={projects} isAdmin={isAdmin} password={password} lang={lang}
             onRefresh={load} showToast={showToast} />
         )}
 
         {/* ── ARTICLES ──────────────────────────────────────────────── */}
         {tab === "articles" && (
-          <ArticlesTab articles={articles} isAdmin={isAdmin} password={password}
+          <ArticlesTab articles={articles} isAdmin={isAdmin} password={password} lang={lang}
             onRefresh={load} showToast={showToast} />
         )}
 
@@ -437,7 +444,7 @@ function Portfolio({ password, role, hospital }) {
       </main>
 
       <footer style={{ textAlign:"center", padding:"20px", color:C.muted, fontSize:11, marginTop:24 }}>
-        © {new Date().getFullYear()} {profile.name || "—"} · Portfolio (Private)
+        © {new Date().getFullYear()} {(isEn ? (profile.name_en || "").trim() : (profile.name || "").trim()) || "—"} · Portfolio (Private)
       </footer>
     </div>
   );
@@ -611,10 +618,12 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
 
       {/* Booking modal (Google Calendar Appointment Schedule) */}
       {bookingOpen && (
-        <EditOverlay title="จองเวลาคุย" onClose={() => setBookingOpen(false)}>
+        <EditOverlay title={isEn ? "Book a time" : "จองเวลาคุย"} onClose={() => setBookingOpen(false)}>
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             <div style={{ color:C.muted, fontSize:12, lineHeight:1.6 }}>
-              ถ้าแสดงผลไม่ขึ้น ให้กด “เปิดหน้าจองในแท็บใหม่” (บางครั้ง Google ไม่อนุญาตการฝัง)
+              {isEn
+                ? "If the embedded calendar does not load, click “Open booking page in a new tab” (Google sometimes blocks embedding)."
+                : "ถ้าแสดงผลไม่ขึ้น ให้กด “เปิดหน้าจองในแท็บใหม่” (บางครั้ง Google ไม่อนุญาตการฝัง)"}
             </div>
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
               {p.booking_url && (
@@ -623,7 +632,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                   border:`1px solid ${C.border}`, color:C.text, textDecoration:"none",
                   background:"#fff",
                 }}>
-                  เปิดหน้าจองในแท็บใหม่ ↗
+                  {isEn ? "Open booking page in a new tab ↗" : "เปิดหน้าจองในแท็บใหม่ ↗"}
                 </a>
               )}
             </div>
@@ -635,7 +644,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                   style={{ width:"100%", height:"100%", border:0 }}
                 />
               ) : (
-                <div style={{ padding:18, color:C.muted, fontSize:13 }}>ยังไม่ได้ตั้งค่าลิงก์จองเวลา</div>
+                <div style={{ padding:18, color:C.muted, fontSize:13 }}>{isEn ? "Booking link is not set yet." : "ยังไม่ได้ตั้งค่าลิงก์จองเวลา"}</div>
               )}
             </div>
           </div>
@@ -784,8 +793,8 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
             { icon:"📧", label:"Email", key:"email" },
             { icon:"💼", label:"LinkedIn", key:"linkedin" },
             { icon:"💻", label:"GitHub", key:"github" },
-            { icon:"📅", label:"จองเวลาคุย", key:"booking_url", isBooking:true },
-            { icon:"✨", label:"สนใจร่วมงาน", key:"interest" },
+            { icon:"📅", label: isEn ? "Book a time" : "จองเวลาคุย", key:"booking_url", isBooking:true },
+            { icon:"✨", label: isEn ? "Collaboration" : "สนใจร่วมงาน", key:"interest" },
           ].map(f => (
             <div key={f.key} className="edit-wrap" style={{
               display:"flex", gap:12, padding:"12px 16px", borderRadius:10,
@@ -809,13 +818,15 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                         fontFamily: "inherit",
                       }}
                     >
-                      จองเวลาคุย ↗
+                      {isEn ? "Book ↗" : "จองเวลาคุย ↗"}
                     </button>
                   ) : (
                     <div style={{ color:C.border, fontSize:13 }}>—</div>
                   )
                 ) : (
-                  <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>{p[f.key] || <span style={{ color:C.border }}>—</span>}</div>
+                  <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>
+                    {(f.key === "interest" ? pick("interest") : (p[f.key] || "")) || <span style={{ color:C.border }}>—</span>}
+                  </div>
                 )}
               </div>
               {isAdmin && btn("✏", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px", flexShrink:0 })}
@@ -862,19 +873,46 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
 }
 
 // ─── PROJECTS TAB ─────────────────────────────────────────────────────────────
-function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
+function ProjectsTab({ projects, isAdmin, password, lang, onRefresh, showToast }) {
   const [editing, setEditing] = useState(null); // null | { ...project } | "new"
   const [form, setForm] = useState({});
   const [viewImg, setViewImg] = useState(null); // { src, title }
+  const isEn = lang === "en";
+  const pick = (p, key) => {
+    if (isEn) return (p[`${key}_en`] || "").trim();
+    return (p[key] || "").trim();
+  };
+  const [translating, setTranslating] = useState(null); // key
 
   const openNew = () => {
-    setForm({ title:"", url:"", image_url:"", description:"", tags:"", color:"#0C7B93", sort_order:0, visible:true });
+    setForm({
+      title:"", title_en:"",
+      url:"", image_url:"",
+      description:"", description_en:"",
+      tags:"", color:"#0C7B93", sort_order:0, visible:true
+    });
     setEditing("new");
   };
 
   const openEdit = (p) => {
     setForm({ ...p, tags: Array.isArray(p.tags) ? p.tags.join(", ") : p.tags });
     setEditing(p.id);
+  };
+
+  const translateToEn = async (key) => {
+    if (!isAdmin) return;
+    const map = { title: "title_en", description: "description_en" };
+    const dest = map[key];
+    if (!dest) return;
+
+    setTranslating(key);
+    try {
+      const text = (form?.[key] || "").toString();
+      const r = await API("translate", { method:"POST", body: JSON.stringify({ text, target: "en" }) }, password);
+      if (r?.translation) setForm(f => ({ ...f, [dest]: r.translation }));
+    } finally {
+      setTranslating(null);
+    }
   };
 
   const save = async () => {
@@ -885,19 +923,19 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
     };
     if (editing === "new") {
       await API("projects", { method:"POST", body:JSON.stringify(payload) }, password);
-      showToast("✓ เพิ่ม project แล้ว");
+      showToast(isEn ? "✓ Project added" : "✓ เพิ่ม project แล้ว");
     } else {
       await API(`projects/${editing}`, { method:"PUT", body:JSON.stringify(payload) }, password);
-      showToast("✓ บันทึกแล้ว");
+      showToast(isEn ? "✓ Saved" : "✓ บันทึกแล้ว");
     }
     setEditing(null);
     onRefresh();
   };
 
   const del = async (id) => {
-    if (!confirm("ลบ project นี้?")) return;
+    if (!confirm(isEn ? "Delete this project?" : "ลบ project นี้?")) return;
     await API(`projects/${id}`, { method:"DELETE" }, password);
-    showToast("ลบแล้ว");
+    showToast(isEn ? "Deleted" : "ลบแล้ว");
     onRefresh();
   };
 
@@ -907,7 +945,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
         <h2 style={{ color:C.navy, margin:0, fontSize:20, letterSpacing:.2 }}>Clinical Digital Tools</h2>
-        {isAdmin && btn("+ เพิ่ม Project", openNew, { background:C.teal, color:"#fff" })}
+        {isAdmin && btn(isEn ? "+ Add project" : "+ เพิ่ม Project", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
       <div className="projects-grid" style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
@@ -938,7 +976,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
                       Project
                     </div>
                     <div style={{ color:"#fff", fontSize:16, fontWeight:700, lineHeight:1.25, wordBreak:"break-word" }}>
-                      {p.title}
+                      {pick(p, "title") || p.title || "—"}
                     </div>
                   </div>
                   {p.url && (
@@ -957,7 +995,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:10 }}>
                 <div style={{ minWidth:0 }}>
                   <h3 style={{ color:C.navy, fontSize:15, margin:0, lineHeight:1.3 }}>
-                    {!p.image_url ? p.title : null}
+                    {!p.image_url ? (pick(p, "title") || p.title || "—") : null}
                     {isAdmin && !p.visible && <span style={{ color:C.muted, fontSize:11, marginLeft:8 }}>[ซ่อน]</span>}
                   </h3>
                   {p.url && !p.image_url && (
@@ -978,7 +1016,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
               </div>
 
               <p style={{ color:"#334155", fontSize:13.5, lineHeight:1.75, margin:"0 0 12px" }}>
-                {p.description}
+                {pick(p, "description") || p.description || ""}
               </p>
 
               <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
@@ -999,12 +1037,29 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
       </div>
 
       {editing !== null && (
-        <EditOverlay title={editing === "new" ? "เพิ่ม Project ใหม่" : "แก้ไข Project"} onClose={() => setEditing(null)}>
+        <EditOverlay title={editing === "new" ? (isEn ? "Add project" : "เพิ่ม Project ใหม่") : (isEn ? "Edit project" : "แก้ไข Project")} onClose={() => setEditing(null)}>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {[["title","ชื่อ Project"],["url","URL (ถ้ามี)"],["image_url","รูป (URL รูปภาพ)"],["description","คำอธิบาย"],["tags","Tags (คั่นด้วย , )"]].map(([k,label]) => (
+            {[
+              ["title","ชื่อ Project (TH)"],
+              ["title_en","Title (EN)"],
+              ["url","URL (ถ้ามี)"],
+              ["image_url","รูป (URL รูปภาพ)"],
+              ["description","คำอธิบาย (TH)"],
+              ["description_en","Description (EN)"],
+              ["tags","Tags (คั่นด้วย , )"],
+            ].map(([k,label]) => (
               <div key={k}>
-                <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{label}</div>
-                {inp(form[k]||"", v => setForm(f => ({...f,[k]:v})), label, k==="description", 3)}
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:4 }}>
+                  <div style={{ fontSize:12, color:C.muted }}>{label}</div>
+                  {isAdmin && (k === "title" || k === "description") && (
+                    btn(
+                      translating === k ? (isEn ? "Translating…" : "กำลังแปล…") : (isEn ? "Translate → EN" : "แปล→EN"),
+                      () => translateToEn(k),
+                      { background:C.blue, color:"#fff", fontSize:11, padding:"4px 10px" }
+                    )
+                  )}
+                </div>
+                {inp(form[k]||"", v => setForm(f => ({...f,[k]:v})), label, k==="description" || k==="description_en", 3)}
               </div>
             ))}
             <div style={{ display:"flex", gap:12 }}>
@@ -1023,11 +1078,11 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
             </div>
             <label style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, cursor:"pointer" }}>
               <input type="checkbox" checked={form.visible !== false} onChange={e => setForm(f=>({...f,visible:e.target.checked}))} />
-              แสดงสาธารณะ
+              {isEn ? "Visible" : "แสดงสาธารณะ"}
             </label>
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end", marginTop:4 }}>
-              {btn("ยกเลิก", () => setEditing(null), { background:"#F1F5F9", color:C.muted })}
-              {btn("บันทึก", save, { background:C.teal, color:"#fff" })}
+              {btn(isEn ? "Cancel" : "ยกเลิก", () => setEditing(null), { background:"#F1F5F9", color:C.muted })}
+              {btn(isEn ? "Save" : "บันทึก", save, { background:C.teal, color:"#fff" })}
             </div>
           </div>
         </EditOverlay>
@@ -1043,13 +1098,35 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
 }
 
 // ─── ARTICLES TAB ─────────────────────────────────────────────────────────────
-function ArticlesTab({ articles, isAdmin, password, onRefresh, showToast }) {
+function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }) {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [reading, setReading] = useState(null);
+  const isEn = lang === "en";
+  const pick = (a, key) => {
+    if (isEn) return (a[`${key}_en`] || "").trim();
+    return (a[key] || "").trim();
+  };
+  const [translating, setTranslating] = useState(null); // key
+
+  const translateToEn = async (key) => {
+    if (!isAdmin) return;
+    const map = { title: "title_en", summary: "summary_en", content: "content_en" };
+    const dest = map[key];
+    if (!dest) return;
+
+    setTranslating(key);
+    try {
+      const text = (form?.[key] || "").toString();
+      const r = await API("translate", { method:"POST", body: JSON.stringify({ text, target: "en" }) }, password);
+      if (r?.translation) setForm(f => ({ ...f, [dest]: r.translation }));
+    } finally {
+      setTranslating(null);
+    }
+  };
 
   const openNew = () => {
-    setForm({ title:"", content:"", summary:"", published:false });
+    setForm({ title:"", title_en:"", content:"", content_en:"", summary:"", summary_en:"", published:false });
     setEditing("new");
   };
   const openEdit = a => { setForm({...a}); setEditing(a.id); };
@@ -1057,18 +1134,18 @@ function ArticlesTab({ articles, isAdmin, password, onRefresh, showToast }) {
   const save = async () => {
     if (editing === "new") {
       await API("articles", { method:"POST", body:JSON.stringify(form) }, password);
-      showToast("✓ เพิ่มบทความแล้ว");
+      showToast(isEn ? "✓ Article added" : "✓ เพิ่มบทความแล้ว");
     } else {
       await API(`articles/${editing}`, { method:"PUT", body:JSON.stringify(form) }, password);
-      showToast("✓ บันทึกแล้ว");
+      showToast(isEn ? "✓ Saved" : "✓ บันทึกแล้ว");
     }
     setEditing(null); onRefresh();
   };
 
   const del = async id => {
-    if (!confirm("ลบบทความนี้?")) return;
+    if (!confirm(isEn ? "Delete this article?" : "ลบบทความนี้?")) return;
     await API(`articles/${id}`, { method:"DELETE" }, password);
-    showToast("ลบแล้ว"); onRefresh();
+    showToast(isEn ? "Deleted" : "ลบแล้ว"); onRefresh();
   };
 
   const visible = isAdmin ? articles : articles.filter(a => a.published);
@@ -1076,13 +1153,13 @@ function ArticlesTab({ articles, isAdmin, password, onRefresh, showToast }) {
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-        <h2 style={{ color:C.navy, margin:0, fontSize:20 }}>บทความ</h2>
-        {isAdmin && btn("+ เพิ่มบทความ", openNew, { background:C.teal, color:"#fff" })}
+        <h2 style={{ color:C.navy, margin:0, fontSize:20 }}>{isEn ? "Articles" : "บทความ"}</h2>
+        {isAdmin && btn(isEn ? "+ Add article" : "+ เพิ่มบทความ", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
       {visible.length === 0 && (
         <div style={{ background:"#fff", borderRadius:12, padding:"40px", textAlign:"center", color:C.muted, border:`1px solid ${C.border}` }}>
-          ยังไม่มีบทความ
+          {isEn ? "No articles yet" : "ยังไม่มีบทความ"}
         </div>
       )}
 
@@ -1099,9 +1176,15 @@ function ArticlesTab({ articles, isAdmin, password, onRefresh, showToast }) {
                   {!a.published && isAdmin && (
                     <span style={{ background:"#FEF3C7", color:"#92400E", fontSize:10, padding:"2px 8px", borderRadius:20 }}>Draft</span>
                   )}
-                  <h3 style={{ color:C.navy, margin:0, fontSize:15, cursor:"pointer" }} onClick={() => setReading(a)}>{a.title}</h3>
+                  <h3 style={{ color:C.navy, margin:0, fontSize:15, cursor:"pointer" }} onClick={() => setReading(a)}>
+                    {pick(a, "title") || a.title || "—"}
+                  </h3>
                 </div>
-                {a.summary && <p style={{ color:C.muted, fontSize:13, margin:"0 0 6px", lineHeight:1.6 }}>{a.summary}</p>}
+                {(pick(a, "summary") || "").length > 0 && (
+                  <p style={{ color:C.muted, fontSize:13, margin:"0 0 6px", lineHeight:1.6 }}>
+                    {pick(a, "summary")}
+                  </p>
+                )}
                 <div style={{ color:C.border, fontSize:11 }}>{a.updated_at?.slice(0,10) || a.created_at?.slice(0,10)}</div>
               </div>
               <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:16 }}>
@@ -1116,36 +1199,69 @@ function ArticlesTab({ articles, isAdmin, password, onRefresh, showToast }) {
 
       {/* Reading modal */}
       {reading && (
-        <EditOverlay title={reading.title} onClose={() => setReading(null)}>
+        <EditOverlay title={(pick(reading, "title") || reading.title)} onClose={() => setReading(null)}>
           <div style={{ color:C.text, fontSize:14, lineHeight:1.9, whiteSpace:"pre-wrap", maxHeight:"60vh", overflowY:"auto" }}>
-            {reading.content || "(ไม่มีเนื้อหา)"}
+            {pick(reading, "content") || reading.content || (isEn ? "(No content)" : "(ไม่มีเนื้อหา)")}
           </div>
         </EditOverlay>
       )}
 
       {/* Edit modal */}
       {editing !== null && (
-        <EditOverlay title={editing === "new" ? "เพิ่มบทความใหม่" : "แก้ไขบทความ"} onClose={() => setEditing(null)}>
+        <EditOverlay title={editing === "new" ? (isEn ? "Add article" : "เพิ่มบทความใหม่") : (isEn ? "Edit article" : "แก้ไขบทความ")} onClose={() => setEditing(null)}>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             <div>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>หัวเรื่อง</div>
-              {inp(form.title||"", v => setForm(f=>({...f,title:v})), "หัวเรื่องบทความ...")}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:4 }}>
+                <div style={{ fontSize:12, color:C.muted }}>หัวเรื่อง (TH)</div>
+                {isAdmin && btn(
+                  translating === "title" ? (isEn ? "Translating…" : "กำลังแปล…") : (isEn ? "Translate → EN" : "แปล→EN"),
+                  () => translateToEn("title"),
+                  { background:C.blue, color:"#fff", fontSize:11, padding:"4px 10px" }
+                )}
+              </div>
+              {inp(form.title||"", v => setForm(f=>({...f,title:v})), isEn ? "Thai title..." : "หัวเรื่องบทความ...")}
             </div>
             <div>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>สรุปย่อ (แสดงในรายการ)</div>
-              {inp(form.summary||"", v => setForm(f=>({...f,summary:v})), "สรุปสั้นๆ...", true, 2)}
+              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Title (EN)</div>
+              {inp(form.title_en||"", v => setForm(f=>({...f,title_en:v})), "Article title...")}
             </div>
             <div>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>เนื้อหา</div>
-              {inp(form.content||"", v => setForm(f=>({...f,content:v})), "เขียนเนื้อหาที่นี่...", true, 10)}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:4 }}>
+                <div style={{ fontSize:12, color:C.muted }}>สรุปย่อ (TH)</div>
+                {isAdmin && btn(
+                  translating === "summary" ? (isEn ? "Translating…" : "กำลังแปล…") : (isEn ? "Translate → EN" : "แปล→EN"),
+                  () => translateToEn("summary"),
+                  { background:C.blue, color:"#fff", fontSize:11, padding:"4px 10px" }
+                )}
+              </div>
+              {inp(form.summary||"", v => setForm(f=>({...f,summary:v})), isEn ? "Thai summary..." : "สรุปสั้นๆ...", true, 2)}
+            </div>
+            <div>
+              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Summary (EN)</div>
+              {inp(form.summary_en||"", v => setForm(f=>({...f,summary_en:v})), "Short summary...", true, 2)}
+            </div>
+            <div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:4 }}>
+                <div style={{ fontSize:12, color:C.muted }}>เนื้อหา (TH)</div>
+                {isAdmin && btn(
+                  translating === "content" ? (isEn ? "Translating…" : "กำลังแปล…") : (isEn ? "Translate → EN" : "แปล→EN"),
+                  () => translateToEn("content"),
+                  { background:C.blue, color:"#fff", fontSize:11, padding:"4px 10px" }
+                )}
+              </div>
+              {inp(form.content||"", v => setForm(f=>({...f,content:v})), isEn ? "Write Thai content here..." : "เขียนเนื้อหาที่นี่...", true, 10)}
+            </div>
+            <div>
+              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Content (EN)</div>
+              {inp(form.content_en||"", v => setForm(f=>({...f,content_en:v})), "Write content here...", true, 10)}
             </div>
             <label style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, cursor:"pointer" }}>
               <input type="checkbox" checked={!!form.published} onChange={e => setForm(f=>({...f,published:e.target.checked}))} />
-              เผยแพร่ (Published)
+              {isEn ? "Published" : "เผยแพร่"} (Published)
             </label>
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
-              {btn("ยกเลิก", () => setEditing(null), { background:"#F1F5F9", color:C.muted })}
-              {btn("บันทึก", save, { background:C.teal, color:"#fff" })}
+              {btn(isEn ? "Cancel" : "ยกเลิก", () => setEditing(null), { background:"#F1F5F9", color:C.muted })}
+              {btn(isEn ? "Save" : "บันทึก", save, { background:C.teal, color:"#fff" })}
             </div>
           </div>
         </EditOverlay>
