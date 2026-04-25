@@ -135,10 +135,11 @@ function LockScreen({ onUnlock }) {
 
       <div style={{ animation: "fadeUp .8s ease both", textAlign:"center", zIndex:1, padding:"0 24px", width:"100%", maxWidth:400 }}>
         <div style={{
-          width:80, height:80, borderRadius:"50%", margin:"0 auto 24px",
-          background:"rgba(255,255,255,.12)", border:"2px solid rgba(255,255,255,.35)",
+          width:96, height:96, borderRadius:18, margin:"0 auto 24px",
+          background:"rgba(255,255,255,.10)", border:"1px solid rgba(255,255,255,.25)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:36,
           overflow:"hidden",
+          boxShadow:"0 16px 40px rgba(0,0,0,.25)",
         }}>
           {publicProfile?.avatar_url ? (
             <img
@@ -391,10 +392,11 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         display:"flex", gap:36, alignItems:"center",
       }}>
         <div style={{
-          width:96, height:96, borderRadius:"50%",
-          background:"rgba(255,255,255,.15)", border:"3px solid rgba(255,255,255,.4)",
+          width:124, height:124, borderRadius:22,
+          background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.28)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:44, flexShrink:0,
           overflow:"hidden",
+          boxShadow:"0 18px 48px rgba(0,0,0,.25)",
         }}>
           {p.avatar_url ? (
             <img
