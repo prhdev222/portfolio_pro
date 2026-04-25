@@ -140,6 +140,7 @@ function LockScreen({ onUnlock }) {
   const [msg, setMsg] = useState("");
   const [publicProfile, setPublicProfile] = useState(null);
   const [viewImg, setViewImg] = useState(null); // { src, title }
+  const [autoTried, setAutoTried] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -156,6 +157,39 @@ function LockScreen({ onUnlock }) {
   }, [publicProfile]);
 
   const lockName = splitNameLastWord(publicProfile?.cover_name || publicProfile?.name || "");
+
+  // Auto-login when opened via link/QR like: https://site/?code=XXXX
+  useEffect(() => {
+    if (autoTried || loading) return;
+    const url = new URL(window.location.href);
+    const code = (url.searchParams.get("code") || "").trim();
+    if (!code) return;
+    setAutoTried(true);
+    setPw(code);
+    (async () => {
+      setLoading(true);
+      try {
+        const r = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: code }),
+        }).then(r => r.json());
+        if (r?.error) {
+          setShake(true); setPw(""); setMsg("รหัสผ่านไม่ถูกต้อง");
+          setTimeout(() => { setShake(false); setMsg(""); }, 800);
+        } else {
+          try {
+            url.searchParams.delete("code");
+            window.history.replaceState({}, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "") + url.hash);
+          } catch {}
+          onUnlock(code, r.role, r.hospital);
+        }
+      } catch {
+        setMsg("เชื่อมต่อ server ไม่ได้");
+      }
+      setLoading(false);
+    })();
+  }, [autoTried, loading, onUnlock]);
 
   const attempt = async () => {
     if (!pw.trim() || loading) return;
@@ -1282,6 +1316,33 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
 function AdminTab({ passwords, password, onRefresh, showToast }) {
   const [form, setForm] = useState({ code:"", hospital_name:"", role:"viewer", note:"" });
   const [adding, setAdding] = useState(false);
+  const [qrFor, setQrFor] = useState(null); // { hospital_name, url }
+
+  const buildViewerLink = (code) => {
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?code=${encodeURIComponent(code || "")}`;
+  };
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("คัดลอกแล้ว");
+      return;
+    } catch {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast("คัดลอกแล้ว");
+    } catch {
+      showToast("คัดลอกไม่สำเร็จ");
+    }
+  };
 
   const add = async () => {
     if (!form.code || !form.hospital_name) return;
@@ -1314,7 +1375,7 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
             <thead>
               <tr style={{ background:"#F8FAFC" }}>
-                {["โรงพยาบาล","รหัสผ่าน","Role","หมายเหตุ","เข้าล่าสุด",""].map((h,i) => (
+                {["โรงพยาบาล","รหัสผ่าน","Role","หมายเหตุ","เข้าล่าสุด","ลิงก์/QR",""].map((h,i) => (
                   <th key={i} style={{ padding:"10px 14px", textAlign:"left", color:C.muted, fontSize:11, letterSpacing:.5, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -1334,6 +1395,12 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
                   <td style={{ padding:"11px 14px", color:C.muted, fontSize:12 }}>{p.note || "—"}</td>
                   <td style={{ padding:"11px 14px", color:C.muted, fontSize:11 }}>{p.last_access?.slice(0,16) || "ยังไม่เคยเข้า"}</td>
                   <td style={{ padding:"11px 14px" }}>
+                    <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                      {btn("คัดลอกลิงก์", () => copyText(buildViewerLink(p.code)), { background:"#EFF6FF", color:C.blue, fontSize:11, padding:"4px 10px" })}
+                      {btn("QR", () => setQrFor({ hospital_name: p.hospital_name, url: buildViewerLink(p.code) }), { background:"#F1F5F9", color:C.muted, fontSize:11, padding:"4px 10px" })}
+                    </div>
+                  </td>
+                  <td style={{ padding:"11px 14px" }}>
                     {btn("ลบ", () => del(p.id), { background:C.danger, color:"#fff", fontSize:11, padding:"4px 10px" })}
                   </td>
                 </tr>
@@ -1342,6 +1409,31 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
           </table>
         </div>
       </div>
+
+      {/* QR modal */}
+      {qrFor && (
+        <EditOverlay title={`QR: ${qrFor.hospital_name}`} onClose={() => setQrFor(null)}>
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <div style={{ color:C.muted, fontSize:12, lineHeight:1.6 }}>
+              สแกนเพื่อเข้าได้เลย (Auto-login) — ลิงก์นี้มีรหัสฝังอยู่ ถ้าต้องปิดสิทธิ์ให้ลบรหัสโรงพยาบาลนี้
+            </div>
+            <div style={{ display:"flex", justifyContent:"center" }}>
+              <img
+                alt="QR"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrFor.url)}`}
+                style={{ width:260, height:260, borderRadius:12, border:`1px solid ${C.border}`, background:"#fff" }}
+              />
+            </div>
+            <div style={{ fontFamily:"monospace", fontSize:12, wordBreak:"break-all", padding:"10px 12px", border:`1px solid ${C.border}`, borderRadius:10, background:"#F8FAFC" }}>
+              {qrFor.url}
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+              {btn("คัดลอกลิงก์", () => copyText(qrFor.url), { background:C.blue, color:"#fff", fontSize:11 })}
+              {btn("ปิด", () => setQrFor(null), { background:"#F1F5F9", color:C.muted })}
+            </div>
+          </div>
+        </EditOverlay>
+      )}
 
       {/* Tips */}
       <div style={{ background:"#EFF6FF", borderRadius:12, padding:"18px 22px", border:"1px solid #BFDBFE", fontSize:13, color:C.blue, lineHeight:1.8 }}>
