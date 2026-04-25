@@ -55,8 +55,11 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('cover_subtitle', 'Hematologist · Clinical Digital Health Developer'),
   ('header_name', 'พญ.อุรารี พรวรนันท์'),
   ('header_tagline', 'HEMATOLOGIST · DIGITAL HEALTH'),
-  ('education', '• แพทยศาสตร์บัณฑิต (มหิดล)\n• วุฒิบัตรอายุรศาสตร์\n• อนุสาขาโลหิตวิทยา (ศิริราช)'),
-  ('work_history', '• นายแพทย์ชำนาญการ โรงพยาบาลสงฆ์ กรมการแพทย์\n• Clinical Digital Health Developer (Health Tech Tools)'),
+  ('education', '• แพทยศาสตร์บัณฑิต (มหิดล)
+• วุฒิบัตรอายุรศาสตร์
+• อนุสาขาโลหิตวิทยา (ศิริราช)'),
+  ('work_history', '• นายแพทย์ชำนาญการ โรงพยาบาลสงฆ์ กรมการแพทย์
+• Clinical Digital Health Developer (Health Tech Tools)'),
   ('awards', '[{\"title\":\"ตัวอย่างผลงาน/รางวัล\",\"url\":\"https://example.com\",\"image\":\"\",\"tags\":[\"press\",\"publication\"]}]'),
   ('headline', 'Hematologist | Clinical Digital Health Developer | Health Tech Tools for Real-world Practice'),
   ('bio',      'แพทย์ผู้เชี่ยวชาญด้านโลหิตวิทยา จบแพทยศาสตร์บัณฑิตมหาวิทยาลัยมหิดล ฝึกอบรมเฉพาะทางโลหิตวิทยาที่โรงพยาบาลศิริราช ปัจจุบันดำรงตำแหน่งนายแพทย์ชำนาญการ โรงพยาบาลสงฆ์ กรมการแพทย์ กระทรวงสาธารณสุข'),

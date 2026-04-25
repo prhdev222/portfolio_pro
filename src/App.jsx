@@ -62,6 +62,9 @@ function EditOverlay({ title, children, onClose }) {
   );
 }
 
+const normalizeText = (v) =>
+  typeof v === "string" ? v.replaceAll("\\n", "\n") : v;
+
 // ─── LOCK SCREEN ─────────────────────────────────────────────────────────────
 function LockScreen({ onUnlock }) {
   const [pw, setPw] = useState("");
@@ -385,8 +388,8 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         <div>
           <div style={{ color:C.accent, fontSize:11, letterSpacing:3, marginBottom:6, textTransform:"uppercase" }}>Private Portfolio</div>
           <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400 }}>{p.name || "—"}</h1>
-          <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{p.education || ""}</div>
-          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{p.work_history || ""}</div>
+          <div style={{ color:"rgba(255,255,255,.85)", fontSize:14, marginBottom:10, whiteSpace:"pre-line" }}>{normalizeText(p.education) || ""}</div>
+          <div style={{ color:"rgba(255,255,255,.65)", fontSize:13, whiteSpace:"pre-line" }}>{normalizeText(p.work_history) || ""}</div>
         </div>
       </div>
 
@@ -507,21 +510,6 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         ))}
       </div>
 
-      {/* Stats */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:24 }}>
-        {[
-          { n:"6+", label:"Clinical Tools\nDeployed" },
-          { n:"67%", label:"Doc Time\nReduction" },
-          { n:"137+", label:"Drug Rules\nEncoded" },
-          { n:"2025", label:"DigiHealth\nChula" },
-        ].map((s,i) => (
-          <div key={i} style={{ background:"#fff", borderRadius:12, padding:"22px 16px", textAlign:"center", border:`1px solid ${C.border}` }}>
-            <div style={{ fontSize:28, fontWeight:700, color:C.teal, marginBottom:4 }}>{s.n}</div>
-            <div style={{ fontSize:11, color:C.muted, lineHeight:1.5, whiteSpace:"pre-line" }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Contact */}
       <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}` }}>
         <h2 style={{ color:C.navy, fontSize:16, margin:"0 0 16px" }}>Contact</h2>
@@ -555,8 +543,8 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
             {fields.map(f => (
               <div key={f.key} style={{ display:"grid", gridTemplateColumns:"160px 1fr auto", gap:10, alignItems:"center" }}>
                 <div style={{ color:C.muted, fontSize:12 }}>{f.label}</div>
-                <div style={{ color:C.text, fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p[f.key] || "—"}</div>
-                {btn("แก้ไข", () => setEditing({ key:f.key, value:p[f.key]||"" }), { background:C.teal, color:"#fff", fontSize:11 })}
+                <div style={{ color:C.text, fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{normalizeText(p[f.key]) || "—"}</div>
+                {btn("แก้ไข", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:C.teal, color:"#fff", fontSize:11 })}
               </div>
             ))}
           </div>
@@ -567,7 +555,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
       {editing && (
         <EditOverlay title={`แก้ไข: ${fields.find(f=>f.key===editing.key)?.label || editing.key}`} onClose={() => setEditing(null)}>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {inp(editing.value, v => setEditing(e => ({...e, value:v})), "ค่าใหม่...", editing.value?.length > 80, 5)}
+            {inp(editing.value, v => setEditing(e => ({...e, value:v})), "ค่าใหม่...", (editing.key === "education" || editing.key === "work_history" || editing.key?.startsWith("bio")) ? true : (editing.value?.length > 80), 5)}
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
               {btn("ยกเลิก", () => setEditing(null), { background:"#F1F5F9", color:C.muted })}
               {btn("บันทึก", save, { background:C.teal, color:"#fff" })}
