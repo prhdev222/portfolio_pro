@@ -1,0 +1,8 @@
+name = "portfolio-pro"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+database_id = "REPLACE_WITH_YOUR_D1_ID"   # ← ใส่ ID จาก: wrangler d1 create portfolio-db

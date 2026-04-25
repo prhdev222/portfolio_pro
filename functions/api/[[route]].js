@@ -1,0 +1,205 @@
+// functions/api/[[route]].js
+// Cloudflare Pages Function — handles all /api/* routes
+// Bind D1 database as "DB" in wrangler.toml / Pages dashboard
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Content-Type': 'application/json',
+};
+
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: CORS });
+
+const err = (msg, status = 400) =>
+  new Response(JSON.stringify({ error: msg }), { status, headers: CORS });
+
+// ─── Auth helper ───
+async function getAuth(request, DB) {
+  const header = request.headers.get('Authorization') || '';
+  const code = header.replace('Bearer ', '').trim();
+  if (!code) return null;
+  const row = await DB.prepare(
+    'SELECT id, hospital_name, role FROM passwords WHERE code = ?'
+  ).bind(code).first();
+  if (row) {
+    await DB.prepare(
+      'UPDATE passwords SET last_access = datetime("now") WHERE code = ?'
+    ).bind(code).run();
+  }
+  return row; // { id, hospital_name, role } or null
+}
+
+export async function onRequest(context) {
+  const { request, env } = context;
+  const DB = env.DB;
+
+  // OPTIONS preflight
+  if (request.method === 'OPTIONS')
+    return new Response(null, { headers: CORS });
+
+  const url = new URL(request.url);
+  // Strip /api/ prefix → "auth", "content", "admin/content", "projects/3", etc.
+  const path = url.pathname.replace(/^\/api\//, '').replace(/\/$/, '');
+  const segments = path.split('/');
+
+  try {
+    // ── GET /api/public  (no auth) ─────────────────────────────────────
+    // Minimal public config so the lock screen / <title> can be driven from DB.
+    if (path === 'public' && request.method === 'GET') {
+      const profileRows = await DB.prepare('SELECT key, value FROM profile').all();
+      const profile = {};
+      profileRows.results.forEach(r => { profile[r.key] = r.value; });
+      return json({ profile });
+    }
+
+    // ── POST /api/auth ──────────────────────────────────────────────────
+    if (path === 'auth' && request.method === 'POST') {
+      const { password } = await request.json();
+      const row = await DB.prepare(
+        'SELECT hospital_name, role FROM passwords WHERE code = ?'
+      ).bind(password).first();
+      if (!row) return err('รหัสผ่านไม่ถูกต้อง', 401);
+      await DB.prepare(
+        'UPDATE passwords SET last_access = datetime("now") WHERE code = ?'
+      ).bind(password).run();
+      return json({ hospital: row.hospital_name, role: row.role });
+    }
+
+    // ── GET /api/content  (viewer + admin) ─────────────────────────────
+    if (path === 'content' && request.method === 'GET') {
+      const auth = await getAuth(request, DB);
+      if (!auth) return err('Unauthorized', 401);
+
+      const [profileRows, projectRows, articleRows] = await Promise.all([
+        DB.prepare('SELECT key, value FROM profile').all(),
+        DB.prepare('SELECT * FROM projects WHERE visible=1 ORDER BY sort_order').all(),
+        DB.prepare('SELECT * FROM articles WHERE published=1 ORDER BY created_at DESC').all(),
+      ]);
+
+      const profile = {};
+      profileRows.results.forEach(r => { profile[r.key] = r.value; });
+
+      return json({
+        profile,
+        projects: projectRows.results.map(p => ({ ...p, tags: JSON.parse(p.tags || '[]') })),
+        articles: articleRows.results,
+        role: auth.role,
+        hospital: auth.hospital_name,
+      });
+    }
+
+    // ── GET /api/admin/content  (admin only — includes unpublished) ─────
+    if (path === 'admin/content' && request.method === 'GET') {
+      const auth = await getAuth(request, DB);
+      if (!auth || auth.role !== 'admin') return err('Admin only', 403);
+
+      const [profileRows, projectRows, articleRows, passwordRows] = await Promise.all([
+        DB.prepare('SELECT key, value FROM profile').all(),
+        DB.prepare('SELECT * FROM projects ORDER BY sort_order').all(),
+        DB.prepare('SELECT * FROM articles ORDER BY created_at DESC').all(),
+        DB.prepare('SELECT id, hospital_name, role, note, created_at, last_access FROM passwords ORDER BY created_at').all(),
+      ]);
+
+      const profile = {};
+      profileRows.results.forEach(r => { profile[r.key] = r.value; });
+
+      return json({
+        profile,
+        projects: projectRows.results.map(p => ({ ...p, tags: JSON.parse(p.tags || '[]') })),
+        articles: articleRows.results,
+        passwords: passwordRows.results,
+      });
+    }
+
+    // ── Admin write routes ──────────────────────────────────────────────
+    const auth = await getAuth(request, DB);
+    if (!auth || auth.role !== 'admin') return err('Admin only', 403);
+
+    // PUT /api/profile/:key
+    if (segments[0] === 'profile' && segments[1] && request.method === 'PUT') {
+      const { value } = await request.json();
+      await DB.prepare(
+        'INSERT OR REPLACE INTO profile (key, value, updated_at) VALUES (?, ?, datetime("now"))'
+      ).bind(segments[1], value).run();
+      return json({ ok: true });
+    }
+
+    // ── Projects ────────────────────────────────────────────────────────
+    if (segments[0] === 'projects') {
+      const id = segments[1];
+
+      if (!id && request.method === 'POST') {
+        const d = await request.json();
+        const r = await DB.prepare(
+          'INSERT INTO projects (title, url, description, tags, color, sort_order, visible) VALUES (?,?,?,?,?,?,?)'
+        ).bind(d.title, d.url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order || 0, 1).run();
+        return json({ id: r.meta.last_row_id });
+      }
+
+      if (id && request.method === 'PUT') {
+        const d = await request.json();
+        await DB.prepare(
+          'UPDATE projects SET title=?,url=?,description=?,tags=?,color=?,sort_order=?,visible=?,updated_at=datetime("now") WHERE id=?'
+        ).bind(d.title, d.url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order ?? 0, d.visible ? 1 : 0, id).run();
+        return json({ ok: true });
+      }
+
+      if (id && request.method === 'DELETE') {
+        await DB.prepare('DELETE FROM projects WHERE id=?').bind(id).run();
+        return json({ ok: true });
+      }
+    }
+
+    // ── Articles ────────────────────────────────────────────────────────
+    if (segments[0] === 'articles') {
+      const id = segments[1];
+
+      if (!id && request.method === 'POST') {
+        const d = await request.json();
+        const r = await DB.prepare(
+          'INSERT INTO articles (title, content, summary, published) VALUES (?,?,?,?)'
+        ).bind(d.title, d.content || '', d.summary || '', d.published ? 1 : 0).run();
+        return json({ id: r.meta.last_row_id });
+      }
+
+      if (id && request.method === 'PUT') {
+        const d = await request.json();
+        await DB.prepare(
+          'UPDATE articles SET title=?,content=?,summary=?,published=?,updated_at=datetime("now") WHERE id=?'
+        ).bind(d.title, d.content || '', d.summary || '', d.published ? 1 : 0, id).run();
+        return json({ ok: true });
+      }
+
+      if (id && request.method === 'DELETE') {
+        await DB.prepare('DELETE FROM articles WHERE id=?').bind(id).run();
+        return json({ ok: true });
+      }
+    }
+
+    // ── Passwords ────────────────────────────────────────────────────────
+    if (segments[0] === 'passwords') {
+      const id = segments[1];
+
+      if (!id && request.method === 'POST') {
+        const d = await request.json();
+        await DB.prepare(
+          'INSERT INTO passwords (code, hospital_name, role, note) VALUES (?,?,?,?)'
+        ).bind(d.code, d.hospital_name, d.role || 'viewer', d.note || '').run();
+        return json({ ok: true });
+      }
+
+      if (id && request.method === 'DELETE') {
+        await DB.prepare('DELETE FROM passwords WHERE id=?').bind(id).run();
+        return json({ ok: true });
+      }
+    }
+
+    return err('Not found', 404);
+
+  } catch (e) {
+    console.error(e);
+    return err(e.message, 500);
+  }
+}
