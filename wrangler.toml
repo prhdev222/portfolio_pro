@@ -5,4 +5,4 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "portfolio-db"
-database_id = "REPLACE_WITH_YOUR_D1_ID"   # ← ใส่ ID จาก: wrangler d1 create portfolio-db
+database_id = "2a2aabb6-8839-47fc-a2f9-0c8b949dcaaa"   # ← ใส่ ID จาก: wrangler d1 create portfolio-db
