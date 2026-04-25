@@ -462,11 +462,13 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
     }
   };
 
-  const awards = parseAwards(p.awards);
+  const isEn = lang === "en";
   const pick = (key) => {
-    if (lang === "en") return normalizeText(p[`${key}_en`]) || normalizeText(p[key]) || "";
+    // In EN mode, only show EN fields (no TH fallback)
+    if (lang === "en") return normalizeText(p[`${key}_en`]) || "";
     return normalizeText(p[key]) || "";
   };
+  const awards = parseAwards(isEn ? p.awards_en : p.awards);
   const aboutName = splitNameLastWord(pick("name"));
   const fields = [
     { key:"name", label:"ชื่อ (ไทย)" },
@@ -474,12 +476,19 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
     { key:"avatar_url", label:"รูปโปรไฟล์ (URL รูปภาพ)" },
     { key:"booking_url", label:"ลิงก์จองเวลาคุย (Google Calendar)" },
     { key:"education", label:"ประวัติการศึกษา" },
+    { key:"education_en", label:"Education (English)" },
     { key:"work_history", label:"ประวัติการทำงาน" },
+    { key:"work_history_en", label:"Work history (English)" },
     { key:"awards", label:"ผลงานที่เคยได้รับ" },
+    { key:"awards_en", label:"Awards / Achievements (English JSON)" },
     { key:"headline", label:"LinkedIn Headline" },
+    { key:"headline_en", label:"LinkedIn Headline (English)" },
     { key:"bio", label:"ประวัติย่อ (ย่อหน้า 1)" },
+    { key:"bio_en", label:"Bio (Paragraph 1) — English" },
     { key:"bio2", label:"ประวัติย่อ (ย่อหน้า 2)" },
+    { key:"bio2_en", label:"Bio (Paragraph 2) — English" },
     { key:"bio3", label:"ประวัติย่อ (ย่อหน้า 3)" },
+    { key:"bio3_en", label:"Bio (Paragraph 3) — English" },
     { key:"email", label:"Email" },
     { key:"linkedin", label:"LinkedIn URL" },
     { key:"github", label:"GitHub" },
@@ -540,7 +549,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
         tags: (a.tags || "").split(",").map(t => t.trim()).filter(Boolean),
       }))
       .filter(a => a.title || a.url || a.image || a.tags.length);
-    await onSave("awards", JSON.stringify(normalized));
+    await onSave(isEn ? "awards_en" : "awards", JSON.stringify(normalized));
     setAwardsEditing(false);
   };
 
@@ -688,18 +697,18 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       }} className="edit-wrap">
         <span style={{ fontSize:18 }}>💼</span>
         <span style={{ color:C.blue, fontSize:14, fontStyle:"italic", flex:1 }}>{pick("headline")}</span>
-        {isAdmin && btn("✏", () => setEditing({ key:"headline", value:p.headline || "" }), { background:C.teal, color:"#fff", className:"edit-btn" })}
+        {isAdmin && btn("✏", () => setEditing({ key: isEn ? "headline_en" : "headline", value: pick("headline") }), { background:C.teal, color:"#fff", className:"edit-btn" })}
       </div>
 
       {/* Bio paragraphs */}
       <div style={{ background:"#fff", borderRadius:16, padding:"28px 32px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>ประวัติส่วนตัว</h2>
+          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Bio" : "ประวัติส่วนตัว"}</h2>
         </div>
-        {["bio","bio2","bio3"].map((key,i) => (
+        {["bio","bio2","bio3"].map((key) => (
           <div key={key} className="edit-wrap" style={{ display:"flex", gap:8, marginBottom:14, alignItems:"flex-start" }}>
             <p style={{ color:"#374151", lineHeight:1.9, fontSize:14, margin:0, flex:1 }}>{pick(key)}</p>
-            {isAdmin && btn("✏", () => setEditing({ key, value:p[key]||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px" })}
+            {isAdmin && btn("✏", () => setEditing({ key: isEn ? `${key}_en` : key, value: pick(key) }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px" })}
           </div>
         ))}
       </div>
@@ -707,11 +716,11 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       {/* Awards */}
       <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
-          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>ผลงานที่เคยได้รับ</h2>
+          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Awards / Achievements" : "ผลงานที่เคยได้รับ"}</h2>
           {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
         </div>
         {awards.length === 0 ? (
-          <div style={{ color:C.muted, fontSize:13 }}>ยังไม่มีข้อมูล</div>
+          <div style={{ color:C.muted, fontSize:13 }}>{isEn ? "No items yet" : "ยังไม่มีข้อมูล"}</div>
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             {awards.map((a, i) => (
@@ -728,7 +737,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                     src={thumbSrc}
                     alt=""
                     style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}`, cursor:"zoom-in" }}
-                    onClick={() => setViewImg({ src: thumbSrc, title: a?.title || "ผลงาน" })}
+                    onClick={() => setViewImg({ src: thumbSrc, title: a?.title || (isEn ? "Award" : "ผลงาน") })}
                   />
                 ) : (
                   <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
@@ -752,7 +761,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                   )}
                 </div>
                 <div style={{ display:"flex", gap:8, flexShrink:0, alignItems:"center" }}>
-                  {canWatch && btn("ดูวิดีโอ", () => setWatching({ title: a?.title || "YouTube", embedUrl: ytEmbed }), { background:C.teal, color:"#fff", fontSize:11, padding:"5px 10px" })}
+                  {canWatch && btn(isEn ? "Watch" : "ดูวิดีโอ", () => setWatching({ title: a?.title || "YouTube", embedUrl: ytEmbed }), { background:C.teal, color:"#fff", fontSize:11, padding:"5px 10px" })}
                   {a?.url && (
                     <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none" }}>
                       Link ↗
