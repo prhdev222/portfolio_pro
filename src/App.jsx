@@ -524,69 +524,6 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         </div>
       </div>
 
-      {/* Awards */}
-      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
-          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>ผลงานที่เคยได้รับ</h2>
-          {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
-        </div>
-        {awards.length === 0 ? (
-          <div style={{ color:C.muted, fontSize:13 }}>ยังไม่มีข้อมูล</div>
-        ) : (
-          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {awards.map((a, i) => (
-              (() => {
-                const yt = getYouTubeId(a?.url);
-                const ytEmbed = yt ? `https://www.youtube.com/embed/${yt}` : null;
-                const ytThumb = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : null;
-                const canWatch = !!ytEmbed;
-                const thumbSrc = a?.image || ytThumb;
-                return (
-              <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
-                {thumbSrc ? (
-                  <img
-                    src={thumbSrc}
-                    alt=""
-                    style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}`, cursor:"zoom-in" }}
-                    onClick={() => setViewImg({ src: thumbSrc, title: a?.title || "ผลงาน" })}
-                  />
-                ) : (
-                  <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
-                )}
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.text, marginBottom:4, wordBreak:"break-word" }}>
-                    {a?.url ? (
-                      <a href={a.url} target="_blank" rel="noreferrer" style={{ color:C.blue, textDecoration:"none" }}>{a.title || a.url}</a>
-                    ) : (
-                      (a?.title || "—")
-                    )}
-                  </div>
-                  {Array.isArray(a?.tags) && a.tags.length > 0 && (
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {a.tags.map((t, ti) => (
-                        <span key={ti} style={{ fontSize:11, padding:"2px 10px", borderRadius:999, background:"rgba(12,123,147,.08)", color:C.teal, fontFamily:"monospace" }}>
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ display:"flex", gap:8, flexShrink:0, alignItems:"center" }}>
-                  {canWatch && btn("ดูวิดีโอ", () => setWatching({ title: a?.title || "YouTube", embedUrl: ytEmbed }), { background:C.teal, color:"#fff", fontSize:11, padding:"5px 10px" })}
-                  {a?.url && (
-                    <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none" }}>
-                      Link ↗
-                    </a>
-                  )}
-                </div>
-              </div>
-                );
-              })()
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* YouTube viewer modal */}
       {watching && (
         <EditOverlay title={watching.title} onClose={() => setWatching(null)}>
@@ -710,6 +647,69 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
             {isAdmin && btn("✏", () => setEditing({ key, value:p[key]||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px" })}
           </div>
         ))}
+      </div>
+
+      {/* Awards */}
+      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
+          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>ผลงานที่เคยได้รับ</h2>
+          {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
+        </div>
+        {awards.length === 0 ? (
+          <div style={{ color:C.muted, fontSize:13 }}>ยังไม่มีข้อมูล</div>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {awards.map((a, i) => (
+              (() => {
+                const yt = getYouTubeId(a?.url);
+                const ytEmbed = yt ? `https://www.youtube.com/embed/${yt}` : null;
+                const ytThumb = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : null;
+                const canWatch = !!ytEmbed;
+                const thumbSrc = a?.image || ytThumb;
+                return (
+              <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
+                {thumbSrc ? (
+                  <img
+                    src={thumbSrc}
+                    alt=""
+                    style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}`, cursor:"zoom-in" }}
+                    onClick={() => setViewImg({ src: thumbSrc, title: a?.title || "ผลงาน" })}
+                  />
+                ) : (
+                  <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
+                )}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text, marginBottom:4, wordBreak:"break-word" }}>
+                    {a?.url ? (
+                      <a href={a.url} target="_blank" rel="noreferrer" style={{ color:C.blue, textDecoration:"none" }}>{a.title || a.url}</a>
+                    ) : (
+                      (a?.title || "—")
+                    )}
+                  </div>
+                  {Array.isArray(a?.tags) && a.tags.length > 0 && (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {a.tags.map((t, ti) => (
+                        <span key={ti} style={{ fontSize:11, padding:"2px 10px", borderRadius:999, background:"rgba(12,123,147,.08)", color:C.teal, fontFamily:"monospace" }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display:"flex", gap:8, flexShrink:0, alignItems:"center" }}>
+                  {canWatch && btn("ดูวิดีโอ", () => setWatching({ title: a?.title || "YouTube", embedUrl: ytEmbed }), { background:C.teal, color:"#fff", fontSize:11, padding:"5px 10px" })}
+                  {a?.url && (
+                    <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none" }}>
+                      Link ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+                );
+              })()
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Contact */}
