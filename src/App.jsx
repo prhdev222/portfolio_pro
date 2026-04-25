@@ -90,6 +90,47 @@ const getYouTubeId = (rawUrl) => {
   }
 };
 
+function ImageViewer({ src, title, onClose }) {
+  if (!src) return null;
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.75)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 18,
+      }}
+    >
+      <div style={{ width: "min(980px, 96vw)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ color: "rgba(255,255,255,.85)", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {title || "รูปภาพ"}
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: "transparent", border: "none", color: "#fff", fontSize: 22, cursor: "pointer", padding: "4px 8px" }}
+            aria-label="close"
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.16)", background: "#000" }}>
+          <img
+            src={src}
+            alt={title || ""}
+            style={{ width: "100%", maxHeight: "82vh", objectFit: "contain", display: "block" }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── LOCK SCREEN ─────────────────────────────────────────────────────────────
 function LockScreen({ onUnlock }) {
   const [pw, setPw] = useState("");
@@ -98,6 +139,7 @@ function LockScreen({ onUnlock }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [publicProfile, setPublicProfile] = useState(null);
+  const [viewImg, setViewImg] = useState(null); // { src, title }
 
   useEffect(() => {
     let alive = true;
@@ -179,7 +221,8 @@ function LockScreen({ onUnlock }) {
             <img
               src={publicProfile.avatar_url}
               alt=""
-              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
+              onClick={() => setViewImg({ src: publicProfile.avatar_url, title: publicProfile?.cover_name || publicProfile?.name || "Profile" })}
             />
           ) : "🩺"}
         </div>
@@ -227,6 +270,12 @@ function LockScreen({ onUnlock }) {
           Each hospital has a unique access code
         </div>
       </div>
+
+      <ImageViewer
+        src={viewImg?.src}
+        title={viewImg?.title}
+        onClose={() => setViewImg(null)}
+      />
     </div>
   );
 }
@@ -380,6 +429,8 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   const [awardsEditing, setAwardsEditing] = useState(false);
   const [awardsDraft, setAwardsDraft] = useState([]);
   const [watching, setWatching] = useState(null); // { title, embedUrl }
+  const [viewImg, setViewImg] = useState(null); // { src, title }
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const parseAwards = (raw) => {
     try {
@@ -396,6 +447,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
     { key:"avatar_url", label:"รูปโปรไฟล์ (URL รูปภาพ)" },
+    { key:"booking_url", label:"ลิงก์จองเวลาคุย (Google Calendar)" },
     { key:"education", label:"ประวัติการศึกษา" },
     { key:"work_history", label:"ประวัติการทำงาน" },
     { key:"awards", label:"ผลงานที่เคยได้รับ" },
@@ -456,7 +508,8 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
             <img
               src={p.avatar_url}
               alt=""
-              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
+              onClick={() => setViewImg({ src: p.avatar_url, title: p.name || "Profile" })}
             />
           ) : "👩‍⚕️"}
         </div>
@@ -491,7 +544,12 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
                 return (
               <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
                 {thumbSrc ? (
-                  <img src={thumbSrc} alt="" style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}` }} />
+                  <img
+                    src={thumbSrc}
+                    alt=""
+                    style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}`, cursor:"zoom-in" }}
+                    onClick={() => setViewImg({ src: thumbSrc, title: a?.title || "ผลงาน" })}
+                  />
                 ) : (
                   <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
                 )}
@@ -540,6 +598,45 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
               allowFullScreen
               style={{ position:"absolute", inset:0, width:"100%", height:"100%", border:0 }}
             />
+          </div>
+        </EditOverlay>
+      )}
+
+      <ImageViewer
+        src={viewImg?.src}
+        title={viewImg?.title}
+        onClose={() => setViewImg(null)}
+      />
+
+      {/* Booking modal (Google Calendar Appointment Schedule) */}
+      {bookingOpen && (
+        <EditOverlay title="จองเวลาคุย" onClose={() => setBookingOpen(false)}>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <div style={{ color:C.muted, fontSize:12, lineHeight:1.6 }}>
+              ถ้าแสดงผลไม่ขึ้น ให้กด “เปิดหน้าจองในแท็บใหม่” (บางครั้ง Google ไม่อนุญาตการฝัง)
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+              {p.booking_url && (
+                <a href={p.booking_url} target="_blank" rel="noreferrer" style={{
+                  fontSize:12, padding:"6px 10px", borderRadius:999,
+                  border:`1px solid ${C.border}`, color:C.text, textDecoration:"none",
+                  background:"#fff",
+                }}>
+                  เปิดหน้าจองในแท็บใหม่ ↗
+                </a>
+              )}
+            </div>
+            <div style={{ position:"relative", width:"100%", height:"70vh", borderRadius:12, overflow:"hidden", border:`1px solid ${C.border}`, background:"#fff" }}>
+              {p.booking_url ? (
+                <iframe
+                  src={p.booking_url}
+                  title="Booking"
+                  style={{ width:"100%", height:"100%", border:0 }}
+                />
+              ) : (
+                <div style={{ padding:18, color:C.muted, fontSize:13 }}>ยังไม่ได้ตั้งค่าลิงก์จองเวลา</div>
+              )}
+            </div>
           </div>
         </EditOverlay>
       )}
@@ -623,6 +720,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
             { icon:"📧", label:"Email", key:"email" },
             { icon:"💼", label:"LinkedIn", key:"linkedin" },
             { icon:"💻", label:"GitHub", key:"github" },
+            { icon:"📅", label:"จองเวลาคุย", key:"booking_url", isBooking:true },
             { icon:"✨", label:"สนใจร่วมงาน", key:"interest" },
           ].map(f => (
             <div key={f.key} className="edit-wrap" style={{
@@ -632,9 +730,31 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
               <span style={{ fontSize:18, flexShrink:0 }}>{f.icon}</span>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ color:C.muted, fontSize:10, textTransform:"uppercase", letterSpacing:1, marginBottom:2 }}>{f.label}</div>
-                <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>{p[f.key] || <span style={{ color:C.border }}>—</span>}</div>
+                {f.isBooking ? (
+                  p.booking_url ? (
+                    <button
+                      onClick={() => setBookingOpen(true)}
+                      style={{
+                        border: `1px solid ${C.teal}`,
+                        background: "rgba(12,123,147,.06)",
+                        color: C.teal,
+                        borderRadius: 999,
+                        padding: "6px 10px",
+                        fontSize: 12,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      จองเวลาคุย ↗
+                    </button>
+                  ) : (
+                    <div style={{ color:C.border, fontSize:13 }}>—</div>
+                  )
+                ) : (
+                  <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>{p[f.key] || <span style={{ color:C.border }}>—</span>}</div>
+                )}
               </div>
-              {isAdmin && btn("✏", () => setEditing({ key:f.key, value:p[f.key]||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px", flexShrink:0 })}
+              {isAdmin && btn("✏", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px", flexShrink:0 })}
             </div>
           ))}
         </div>
@@ -676,6 +796,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
 function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
   const [editing, setEditing] = useState(null); // null | { ...project } | "new"
   const [form, setForm] = useState({});
+  const [viewImg, setViewImg] = useState(null); // { src, title }
 
   const openNew = () => {
     setForm({ title:"", url:"", image_url:"", description:"", tags:"", color:"#0C7B93", sort_order:0, visible:true });
@@ -735,7 +856,8 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
                   src={p.image_url}
                   alt=""
                   loading="lazy"
-                  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", filter:"saturate(1.05) contrast(1.02)" }}
+                  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", filter:"saturate(1.05) contrast(1.02)", cursor:"zoom-in" }}
+                  onClick={() => setViewImg({ src: p.image_url, title: p.title || "Project" })}
                 />
                 <div style={{
                   position:"absolute", inset:0,
@@ -841,6 +963,12 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
           </div>
         </EditOverlay>
       )}
+
+      <ImageViewer
+        src={viewImg?.src}
+        title={viewImg?.title}
+        onClose={() => setViewImg(null)}
+      />
     </div>
   );
 }

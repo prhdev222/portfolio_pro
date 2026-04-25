@@ -54,6 +54,7 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('cover_name', 'พญ.อุรารี พรวรนันท์'),
   ('cover_subtitle', 'Hematologist · Clinical Digital Health Developer'),
   ('avatar_url', ''),
+  ('booking_url', 'https://calendar.app.google/gekwdUmq2j6bfWW27'),
   ('header_name', 'พญ.อุรารี พรวรนันท์'),
   ('header_tagline', 'HEMATOLOGIST · DIGITAL HEALTH'),
   ('education', '• แพทยศาสตร์บัณฑิต (มหิดล)
