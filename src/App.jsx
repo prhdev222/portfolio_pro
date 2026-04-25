@@ -573,7 +573,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
   const [form, setForm] = useState({});
 
   const openNew = () => {
-    setForm({ title:"", url:"", description:"", tags:"", color:"#0C7B93", sort_order:0, visible:true });
+    setForm({ title:"", url:"", image_url:"", description:"", tags:"", color:"#0C7B93", sort_order:0, visible:true });
     setEditing("new");
   };
 
@@ -611,44 +611,92 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-        <h2 style={{ color:C.navy, margin:0, fontSize:20 }}>Clinical Digital Tools</h2>
+        <h2 style={{ color:C.navy, margin:0, fontSize:20, letterSpacing:.2 }}>Clinical Digital Tools</h2>
         {isAdmin && btn("+ เพิ่ม Project", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
         {visible.map(p => (
           <div key={p.id} className="card" style={{
-            background:"#fff", borderRadius:16, overflow:"hidden",
-            border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,.04)",
+            background:"#fff", borderRadius:18, overflow:"hidden",
+            border:`1px solid ${C.border}`, boxShadow:"0 10px 30px rgba(2,6,23,.06)",
             opacity: (!p.visible && isAdmin) ? .55 : 1,
           }}>
-            <div style={{ height:5, background:p.color || C.teal }} />
-            <div style={{ padding:"22px 22px 18px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                <h3 style={{ color:C.navy, fontSize:15, margin:0 }}>
-                  {p.title}
-                  {isAdmin && !p.visible && <span style={{ color:C.muted, fontSize:11, marginLeft:8 }}>[ซ่อน]</span>}
-                </h3>
-                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+            <div style={{ height:4, background:`linear-gradient(90deg, ${p.color || C.teal}, ${C.navy})` }} />
+
+            {p.image_url ? (
+              <div style={{ position:"relative", height:170, background:"#0b1220" }}>
+                <img
+                  src={p.image_url}
+                  alt=""
+                  loading="lazy"
+                  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", filter:"saturate(1.05) contrast(1.02)" }}
+                />
+                <div style={{
+                  position:"absolute", inset:0,
+                  background:"linear-gradient(180deg, rgba(2,6,23,0) 0%, rgba(2,6,23,.55) 72%, rgba(2,6,23,.78) 100%)",
+                }} />
+                <div style={{ position:"absolute", left:16, right:16, bottom:14, display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:12 }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ color:"rgba(255,255,255,.75)", fontSize:10, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>
+                      Project
+                    </div>
+                    <div style={{ color:"#fff", fontSize:16, fontWeight:700, lineHeight:1.25, wordBreak:"break-word" }}>
+                      {p.title}
+                    </div>
+                  </div>
                   {p.url && (
                     <a href={p.url} target="_blank" rel="noreferrer" style={{
-                      fontSize:11, padding:"3px 10px", borderRadius:20,
-                      border:`1px solid ${p.color||C.teal}`, color:p.color||C.teal,
-                      textDecoration:"none",
+                      fontSize:11, padding:"6px 10px", borderRadius:999,
+                      border:"1px solid rgba(255,255,255,.35)", color:"#fff",
+                      textDecoration:"none", backdropFilter:"blur(8px)", background:"rgba(255,255,255,.08)",
+                      flexShrink:0,
                     }}>Live ↗</a>
                   )}
-                  {isAdmin && btn("✏", () => openEdit(p), { background:C.blue, color:"#fff", fontSize:11, padding:"3px 10px" })}
-                  {isAdmin && btn("✕", () => del(p.id), { background:C.danger, color:"#fff", fontSize:11, padding:"3px 8px" })}
                 </div>
               </div>
-              <p style={{ color:"#4B5563", fontSize:13, lineHeight:1.7, margin:"0 0 12px" }}>{p.description}</p>
-              <div>{(Array.isArray(p.tags) ? p.tags : []).map((t,i) => (
-                <span key={i} style={{
-                  display:"inline-block", padding:"2px 10px", borderRadius:20,
-                  fontSize:11, margin:"2px 3px",
-                  background:"rgba(12,123,147,.08)", color:C.teal, fontFamily:"monospace",
-                }}>{t}</span>
-              ))}</div>
+            ) : null}
+
+            <div style={{ padding:"18px 20px 18px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:10 }}>
+                <div style={{ minWidth:0 }}>
+                  <h3 style={{ color:C.navy, fontSize:15, margin:0, lineHeight:1.3 }}>
+                    {!p.image_url ? p.title : null}
+                    {isAdmin && !p.visible && <span style={{ color:C.muted, fontSize:11, marginLeft:8 }}>[ซ่อน]</span>}
+                  </h3>
+                  {p.url && !p.image_url && (
+                    <a href={p.url} target="_blank" rel="noreferrer" style={{
+                      display:"inline-block",
+                      marginTop:6,
+                      fontSize:12,
+                      color:C.blue,
+                      textDecoration:"none",
+                      wordBreak:"break-all",
+                    }}>{p.url.replace(/^https?:\/\//, "")} ↗</a>
+                  )}
+                </div>
+                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                  {isAdmin && btn("✏", () => openEdit(p), { background:C.blue, color:"#fff", fontSize:11, padding:"5px 10px" })}
+                  {isAdmin && btn("✕", () => del(p.id), { background:C.danger, color:"#fff", fontSize:11, padding:"5px 10px" })}
+                </div>
+              </div>
+
+              <p style={{ color:"#334155", fontSize:13.5, lineHeight:1.75, margin:"0 0 12px" }}>
+                {p.description}
+              </p>
+
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {(Array.isArray(p.tags) ? p.tags : []).map((t,i) => (
+                  <span key={i} style={{
+                    display:"inline-flex", alignItems:"center",
+                    padding:"4px 10px", borderRadius:999,
+                    fontSize:11, lineHeight:1,
+                    background:"rgba(12,123,147,.08)", color:C.teal,
+                    border:"1px solid rgba(12,123,147,.16)",
+                    fontFamily:"monospace",
+                  }}>{t}</span>
+                ))}
+              </div>
             </div>
           </div>
         ))}
@@ -657,7 +705,7 @@ function ProjectsTab({ projects, isAdmin, password, onRefresh, showToast }) {
       {editing !== null && (
         <EditOverlay title={editing === "new" ? "เพิ่ม Project ใหม่" : "แก้ไข Project"} onClose={() => setEditing(null)}>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {[["title","ชื่อ Project"],["url","URL (ถ้ามี)"],["description","คำอธิบาย"],["tags","Tags (คั่นด้วย , )"]].map(([k,label]) => (
+            {[["title","ชื่อ Project"],["url","URL (ถ้ามี)"],["image_url","รูป (URL รูปภาพ)"],["description","คำอธิบาย"],["tags","Tags (คั่นด้วย , )"]].map(([k,label]) => (
               <div key={k}>
                 <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{label}</div>
                 {inp(form[k]||"", v => setForm(f => ({...f,[k]:v})), label, k==="description", 3)}

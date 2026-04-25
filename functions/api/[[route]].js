@@ -133,16 +133,16 @@ export async function onRequest(context) {
       if (!id && request.method === 'POST') {
         const d = await request.json();
         const r = await DB.prepare(
-          'INSERT INTO projects (title, url, description, tags, color, sort_order, visible) VALUES (?,?,?,?,?,?,?)'
-        ).bind(d.title, d.url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order || 0, 1).run();
+          'INSERT INTO projects (title, url, image_url, description, tags, color, sort_order, visible) VALUES (?,?,?,?,?,?,?,?)'
+        ).bind(d.title, d.url || '', d.image_url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order || 0, 1).run();
         return json({ id: r.meta.last_row_id });
       }
 
       if (id && request.method === 'PUT') {
         const d = await request.json();
         await DB.prepare(
-          'UPDATE projects SET title=?,url=?,description=?,tags=?,color=?,sort_order=?,visible=?,updated_at=datetime("now") WHERE id=?'
-        ).bind(d.title, d.url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order ?? 0, d.visible ? 1 : 0, id).run();
+          'UPDATE projects SET title=?,url=?,image_url=?,description=?,tags=?,color=?,sort_order=?,visible=?,updated_at=datetime("now") WHERE id=?'
+        ).bind(d.title, d.url || '', d.image_url || '', d.description || '', JSON.stringify(d.tags || []), d.color || '#0C7B93', d.sort_order ?? 0, d.visible ? 1 : 0, id).run();
         return json({ ok: true });
       }
 
