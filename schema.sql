@@ -53,6 +53,7 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('site_title', 'Portfolio — พญ.อุรารี พรวรนันท์'),
   ('cover_name', 'พญ.อุรารี พรวรนันท์'),
   ('cover_subtitle', 'Hematologist · Clinical Digital Health Developer'),
+  ('avatar_url', ''),
   ('header_name', 'พญ.อุรารี พรวรนันท์'),
   ('header_tagline', 'HEMATOLOGIST · DIGITAL HEALTH'),
   ('education', '• แพทยศาสตร์บัณฑิต (มหิดล)

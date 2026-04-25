@@ -138,7 +138,16 @@ function LockScreen({ onUnlock }) {
           width:80, height:80, borderRadius:"50%", margin:"0 auto 24px",
           background:"rgba(255,255,255,.12)", border:"2px solid rgba(255,255,255,.35)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:36,
-        }}>🩺</div>
+          overflow:"hidden",
+        }}>
+          {publicProfile?.avatar_url ? (
+            <img
+              src={publicProfile.avatar_url}
+              alt=""
+              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+            />
+          ) : "🩺"}
+        </div>
 
         <div style={{ color:"rgba(255,255,255,.5)", fontSize:11, letterSpacing:4, marginBottom:8, textTransform:"uppercase" }}>Private Portfolio</div>
         <h1 style={{ fontFamily:"'Cormorant Garamond', Georgia", color:"#fff", fontSize:30, fontWeight:400, margin:"0 0 4px" }}>
@@ -331,6 +340,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   const fields = [
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
+    { key:"avatar_url", label:"รูปโปรไฟล์ (URL รูปภาพ)" },
     { key:"education", label:"ประวัติการศึกษา" },
     { key:"work_history", label:"ประวัติการทำงาน" },
     { key:"awards", label:"ผลงานที่เคยได้รับ" },
@@ -384,7 +394,16 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
           width:96, height:96, borderRadius:"50%",
           background:"rgba(255,255,255,.15)", border:"3px solid rgba(255,255,255,.4)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:44, flexShrink:0,
-        }}>👩‍⚕️</div>
+          overflow:"hidden",
+        }}>
+          {p.avatar_url ? (
+            <img
+              src={p.avatar_url}
+              alt=""
+              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+            />
+          ) : "👩‍⚕️"}
+        </div>
         <div>
           <div style={{ color:C.accent, fontSize:11, letterSpacing:3, marginBottom:6, textTransform:"uppercase" }}>Private Portfolio</div>
           <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400 }}>{p.name || "—"}</h1>
