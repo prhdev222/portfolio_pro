@@ -73,6 +73,23 @@ const splitNameLastWord = (name) => {
   return { first: trimmed.slice(0, idx), last: trimmed.slice(idx + 1) };
 };
 
+const getYouTubeId = (rawUrl) => {
+  if (typeof rawUrl !== "string" || !rawUrl.trim()) return null;
+  try {
+    const url = new URL(rawUrl.trim());
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return url.pathname.replace("/", "") || null;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") return url.searchParams.get("v");
+      if (url.pathname.startsWith("/embed/")) return url.pathname.split("/embed/")[1]?.split("/")[0] || null;
+      if (url.pathname.startsWith("/shorts/")) return url.pathname.split("/shorts/")[1]?.split("/")[0] || null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 // ─── LOCK SCREEN ─────────────────────────────────────────────────────────────
 function LockScreen({ onUnlock }) {
   const [pw, setPw] = useState("");
@@ -362,6 +379,7 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
   const [editing, setEditing] = useState(null); // { key, value }
   const [awardsEditing, setAwardsEditing] = useState(false);
   const [awardsDraft, setAwardsDraft] = useState([]);
+  const [watching, setWatching] = useState(null); // { title, embedUrl }
 
   const parseAwards = (raw) => {
     try {
@@ -464,9 +482,16 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             {awards.map((a, i) => (
+              (() => {
+                const yt = getYouTubeId(a?.url);
+                const ytEmbed = yt ? `https://www.youtube.com/embed/${yt}` : null;
+                const ytThumb = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : null;
+                const canWatch = !!ytEmbed;
+                const thumbSrc = a?.image || ytThumb;
+                return (
               <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
-                {a?.image ? (
-                  <img src={a.image} alt="" style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}` }} />
+                {thumbSrc ? (
+                  <img src={thumbSrc} alt="" style={{ width:52, height:52, objectFit:"cover", borderRadius:10, border:`1px solid ${C.border}` }} />
                 ) : (
                   <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
                 )}
@@ -488,16 +513,36 @@ function AboutTab({ profile: p, isAdmin, onSave }) {
                     </div>
                   )}
                 </div>
-                {a?.url && (
-                  <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none", flexShrink:0 }}>
-                    Link ↗
-                  </a>
-                )}
+                <div style={{ display:"flex", gap:8, flexShrink:0, alignItems:"center" }}>
+                  {canWatch && btn("ดูวิดีโอ", () => setWatching({ title: a?.title || "YouTube", embedUrl: ytEmbed }), { background:C.teal, color:"#fff", fontSize:11, padding:"5px 10px" })}
+                  {a?.url && (
+                    <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize:11, padding:"3px 10px", borderRadius:20, border:`1px solid ${C.teal}`, color:C.teal, textDecoration:"none" }}>
+                      Link ↗
+                    </a>
+                  )}
+                </div>
               </div>
+                );
+              })()
             ))}
           </div>
         )}
       </div>
+
+      {/* YouTube viewer modal */}
+      {watching && (
+        <EditOverlay title={watching.title} onClose={() => setWatching(null)}>
+          <div style={{ position:"relative", width:"100%", paddingTop:"56.25%", borderRadius:12, overflow:"hidden", border:`1px solid ${C.border}`, background:"#000" }}>
+            <iframe
+              src={watching.embedUrl}
+              title={watching.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{ position:"absolute", inset:0, width:"100%", height:"100%", border:0 }}
+            />
+          </div>
+        </EditOverlay>
+      )}
 
       {/* Awards editor modal */}
       {awardsEditing && (
