@@ -281,7 +281,7 @@ function LockScreen({ onUnlock }) {
 }
 
 // ─── PORTFOLIO (viewer + admin) ───────────────────────────────────────────────
-function Portfolio({ password, role, hospital }) {
+function Portfolio({ password, role, hospital, onLogout }) {
   const isAdmin = role === "admin";
   const [tab, setTab] = useState("about");
   const [data, setData] = useState(null);   // { profile, projects, articles, passwords }
@@ -411,6 +411,14 @@ function Portfolio({ password, role, hospital }) {
               color: lang==="en" ? "#fff" : "rgba(255,255,255,.7)",
             }}>EN</button>
           </div>
+          {btn(isEn ? "Logout" : "ออกจากระบบ", onLogout, {
+            background:"rgba(255,255,255,.08)",
+            border:`1px solid rgba(255,255,255,.18)`,
+            color:"rgba(255,255,255,.85)",
+            fontSize:11,
+            padding:"6px 12px",
+            borderRadius:999,
+          })}
           <div style={{ color:"rgba(255,255,255,.4)", fontSize:11, whiteSpace:"nowrap" }}>
             {hospital} {isAdmin && <span style={{ color:C.accent }}>· Admin</span>}
           </div>
@@ -1389,6 +1397,11 @@ export default function App() {
     setSession(s);
   };
 
+  const handleLogout = () => {
+    try { sessionStorage.removeItem("portfolio_session"); } catch {}
+    setSession(null);
+  };
+
   if (!session) return <LockScreen onUnlock={handleUnlock} />;
-  return <Portfolio password={session.pw} role={session.role} hospital={session.hospital} />;
+  return <Portfolio password={session.pw} role={session.role} hospital={session.hospital} onLogout={handleLogout} />;
 }

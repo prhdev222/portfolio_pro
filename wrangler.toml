@@ -6,3 +6,8 @@ pages_build_output_dir = "dist"
 binding = "DB"
 database_name = "portfolio-db"
 database_id = "2a2aabb6-8839-47fc-a2f9-0c8b949dcaaa"   # ← ใส่ ID จาก: wrangler d1 create portfolio-db
+
+[vars]
+OPENROUTER_MODEL = "openai/gpt-4o-mini"
+OPENROUTER_REFERER = "https://portfolio-pro-8zf.pages.dev/"
+OPENROUTER_APP_TITLE = "portfolio-pro"

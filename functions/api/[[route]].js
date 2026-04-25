@@ -64,10 +64,17 @@ async function translateViaOpenRouter(env, { text, target = 'en' }) {
 }
 
 // ─── Auth helper ───
-async function getAuth(request, DB) {
+async function getAuth(request, DB, env) {
   const header = request.headers.get('Authorization') || '';
   const code = header.replace('Bearer ', '').trim();
   if (!code) return null;
+
+  // Admin override via secret env var (no DB record needed)
+  const adminPw = (env?.ADMIN_PASSWORD || '').trim();
+  if (adminPw && code === adminPw) {
+    return { id: 0, hospital_name: 'Admin', role: 'admin' };
+  }
+
   const row = await DB.prepare(
     'SELECT id, hospital_name, role FROM passwords WHERE code = ?'
   ).bind(code).first();
@@ -105,6 +112,10 @@ export async function onRequest(context) {
     // ── POST /api/auth ──────────────────────────────────────────────────
     if (path === 'auth' && request.method === 'POST') {
       const { password } = await request.json();
+      const adminPw = (env?.ADMIN_PASSWORD || '').trim();
+      if (adminPw && (password || '').trim() === adminPw) {
+        return json({ hospital: 'Admin', role: 'admin' });
+      }
       const row = await DB.prepare(
         'SELECT hospital_name, role FROM passwords WHERE code = ?'
       ).bind(password).first();
@@ -117,7 +128,7 @@ export async function onRequest(context) {
 
     // ── GET /api/content  (viewer + admin) ─────────────────────────────
     if (path === 'content' && request.method === 'GET') {
-      const auth = await getAuth(request, DB);
+      const auth = await getAuth(request, DB, env);
       if (!auth) return err('Unauthorized', 401);
 
       const [profileRows, projectRows, articleRows] = await Promise.all([
@@ -140,7 +151,7 @@ export async function onRequest(context) {
 
     // ── GET /api/admin/content  (admin only — includes unpublished) ─────
     if (path === 'admin/content' && request.method === 'GET') {
-      const auth = await getAuth(request, DB);
+      const auth = await getAuth(request, DB, env);
       if (!auth || auth.role !== 'admin') return err('Admin only', 403);
 
       const [profileRows, projectRows, articleRows, passwordRows] = await Promise.all([
@@ -162,7 +173,7 @@ export async function onRequest(context) {
     }
 
     // ── Admin write routes ──────────────────────────────────────────────
-    const auth = await getAuth(request, DB);
+    const auth = await getAuth(request, DB, env);
     if (!auth || auth.role !== 'admin') return err('Admin only', 403);
 
     // ── POST /api/translate (admin only) ────────────────────────────────
