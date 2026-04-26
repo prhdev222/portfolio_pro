@@ -604,6 +604,10 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
   const awards = parseAwards(isEn ? p.awards_en : p.awards);
   const aboutName = splitNameLastWord(pick("name"));
   const fields = [
+    { key:"header_name", label:"ชื่อบนแถบเมนู (TH)" },
+    { key:"header_name_en", label:"Menu name (EN)" },
+    { key:"header_tagline", label:"คำโปรยบนแถบเมนู (TH)" },
+    { key:"header_tagline_en", label:"Menu tagline (EN)" },
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
     { key:"avatar_url", label:"รูปโปรไฟล์ (URL รูปภาพ)" },
