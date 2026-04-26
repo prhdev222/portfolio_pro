@@ -171,6 +171,9 @@ export async function onRequest(context) {
         projects: projectRows.results.map(p => ({ ...p, tags: JSON.parse(p.tags || '[]') })),
         articles: articleRows.results,
         passwords: passwordRows.results,
+        // Allow admin sessions to also receive/apply a theme
+        theme_preset: auth.theme_preset || 'confident',
+        theme_overrides: auth.theme_overrides || '',
       });
     }
 

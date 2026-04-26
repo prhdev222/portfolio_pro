@@ -1620,6 +1620,10 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
     const next = { ...row, ...patch };
     await API(`passwords/${row.id}`, { method:"PUT", body:JSON.stringify(next) }, password);
     showToast("✓ บันทึกแล้ว");
+    // Preview the selected theme immediately in the current admin session.
+    if (patch?.theme_preset) {
+      try { applyTheme(patch.theme_preset, next.theme_overrides || ""); } catch {}
+    }
     onRefresh();
   };
 
