@@ -328,6 +328,9 @@ function Portfolio({ password, role, hospital, onLogout }) {
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(""), 2500); };
   const isEn = lang === "en";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => { setMobileMenuOpen(false); }, [tab]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -384,12 +387,15 @@ function Portfolio({ password, role, hospital, onLogout }) {
           .brand-title { font-size: 12px !important; }
           .brand-tagline { font-size: 9px !important; letter-spacing: .8px !important; }
           .tabs-btn { padding: 6px 10px !important; font-size: 11px !important; }
+          .nav-wrap { display: none !important; }
+          .hamburger-btn { display: inline-flex !important; }
           .hero { flex-direction: column !important; align-items: flex-start !important; padding: 26px 20px !important; gap: 16px !important; }
           .hero-avatar { width: 104px !important; height: 104px !important; border-radius: 20px !important; }
           .projects-grid { grid-template-columns: 1fr !important; }
           .card-img { height: 150px !important; }
           .name-last { display: block; }
         }
+        .hamburger-btn { display: none; align-items: center; justify-content: center; }
       `}</style>
 
       {/* Toast */}
@@ -420,6 +426,26 @@ function Portfolio({ password, role, hospital, onLogout }) {
             </div>
           </div>
         </div>
+
+        <button
+          className="hamburger-btn"
+          onClick={() => setMobileMenuOpen(v => !v)}
+          aria-label="menu"
+          style={{
+            background:"rgba(255,255,255,.08)",
+            border:"1px solid rgba(255,255,255,.18)",
+            color:"rgba(255,255,255,.9)",
+            borderRadius:12,
+            width:40,
+            height:40,
+            cursor:"pointer",
+            fontSize:18,
+            flexShrink:0,
+          }}
+        >
+          ☰
+        </button>
+
         <nav className="nav-wrap" style={{ display:"flex", gap:4 }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -458,6 +484,57 @@ function Portfolio({ password, role, hospital, onLogout }) {
           </div>
         </div>
       </header>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={(e) => e.target === e.currentTarget && setMobileMenuOpen(false)}
+          style={{
+            position:"fixed",
+            inset:0,
+            background:"rgba(0,0,0,.35)",
+            zIndex: 150,
+            padding:14,
+          }}
+        >
+          <div style={{
+            maxWidth: 420,
+            margin:"0 auto",
+            background:"#fff",
+            borderRadius:16,
+            overflow:"hidden",
+            border:`1px solid ${C.border}`,
+            boxShadow:"0 24px 64px rgba(0,0,0,.22)",
+          }}>
+            <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${C.border}` }}>
+              <div style={{ color:C.navy, fontWeight:700, fontSize:13 }}>{isEn ? "Menu" : "เมนู"}</div>
+              <button onClick={() => setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:18 }}>✕</button>
+            </div>
+            <div style={{ padding:"10px 10px", display:"flex", flexDirection:"column", gap:6 }}>
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => { setTab(t.id); setMobileMenuOpen(false); }}
+                  style={{
+                    textAlign:"left",
+                    width:"100%",
+                    border:"1px solid " + (tab===t.id ? C.teal : C.border),
+                    background: tab===t.id ? "rgba(12,123,147,.08)" : "#fff",
+                    color: tab===t.id ? C.teal : C.text,
+                    borderRadius:12,
+                    padding:"10px 12px",
+                    cursor:"pointer",
+                    fontSize:13,
+                    fontFamily:"inherit",
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="main-wrap" style={{ maxWidth:980, margin:"0 auto", padding:"36px 24px", animation:"fadeUp .4s ease" }} key={tab}>
 
