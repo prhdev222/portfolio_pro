@@ -76,7 +76,7 @@ async function getAuth(request, DB, env) {
   }
 
   const row = await DB.prepare(
-    'SELECT id, hospital_name, role FROM passwords WHERE code = ?'
+    'SELECT id, hospital_name, role, theme_preset, theme_overrides FROM passwords WHERE code = ?'
   ).bind(code).first();
   if (row) {
     await DB.prepare(
@@ -114,16 +114,16 @@ export async function onRequest(context) {
       const { password } = await request.json();
       const adminPw = (env?.ADMIN_PASSWORD || '').trim();
       if (adminPw && (password || '').trim() === adminPw) {
-        return json({ hospital: 'Admin', role: 'admin' });
+        return json({ hospital: 'Admin', role: 'admin', theme_preset: 'confident', theme_overrides: '' });
       }
       const row = await DB.prepare(
-        'SELECT hospital_name, role FROM passwords WHERE code = ?'
+        'SELECT hospital_name, role, theme_preset, theme_overrides FROM passwords WHERE code = ?'
       ).bind(password).first();
       if (!row) return err('รหัสผ่านไม่ถูกต้อง', 401);
       await DB.prepare(
         'UPDATE passwords SET last_access = datetime("now") WHERE code = ?'
       ).bind(password).run();
-      return json({ hospital: row.hospital_name, role: row.role });
+      return json({ hospital: row.hospital_name, role: row.role, theme_preset: row.theme_preset, theme_overrides: row.theme_overrides || '' });
     }
 
     // ── GET /api/content  (viewer + admin) ─────────────────────────────
@@ -146,6 +146,8 @@ export async function onRequest(context) {
         articles: articleRows.results,
         role: auth.role,
         hospital: auth.hospital_name,
+        theme_preset: auth.theme_preset,
+        theme_overrides: auth.theme_overrides || '',
       });
     }
 
@@ -158,7 +160,7 @@ export async function onRequest(context) {
         DB.prepare('SELECT key, value FROM profile').all(),
         DB.prepare('SELECT * FROM projects ORDER BY sort_order').all(),
         DB.prepare('SELECT * FROM articles ORDER BY created_at DESC').all(),
-        DB.prepare('SELECT id, hospital_name, code, role, note, created_at, last_access FROM passwords ORDER BY created_at').all(),
+        DB.prepare('SELECT id, hospital_name, code, role, note, theme_preset, theme_overrides, created_at, last_access FROM passwords ORDER BY created_at').all(),
       ]);
 
       const profile = {};
@@ -291,8 +293,30 @@ export async function onRequest(context) {
       if (!id && request.method === 'POST') {
         const d = await request.json();
         await DB.prepare(
-          'INSERT INTO passwords (code, hospital_name, role, note) VALUES (?,?,?,?)'
-        ).bind(d.code, d.hospital_name, d.role || 'viewer', d.note || '').run();
+          'INSERT INTO passwords (code, hospital_name, role, note, theme_preset, theme_overrides) VALUES (?,?,?,?,?,?)'
+        ).bind(
+          d.code,
+          d.hospital_name,
+          d.role || 'viewer',
+          d.note || '',
+          d.theme_preset || 'confident',
+          d.theme_overrides || ''
+        ).run();
+        return json({ ok: true });
+      }
+
+      if (id && request.method === 'PUT') {
+        const d = await request.json();
+        await DB.prepare(
+          'UPDATE passwords SET hospital_name=?, role=?, note=?, theme_preset=?, theme_overrides=? WHERE id=?'
+        ).bind(
+          d.hospital_name,
+          d.role || 'viewer',
+          d.note || '',
+          d.theme_preset || 'confident',
+          d.theme_overrides || '',
+          id
+        ).run();
         return json({ ok: true });
       }
 

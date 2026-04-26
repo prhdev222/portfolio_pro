@@ -7,12 +7,103 @@ const API = (path, opts = {}, password = null) => {
   return fetch(`/api/${path}`, { headers, ...opts }).then(r => r.json());
 };
 
-// ─── Palette ────────────────────────────────────────────────────────────────
+// ─── Palette (theme via CSS variables) ───────────────────────────────────────
 const C = {
-  navy: "#0B2447", blue: "#19376D", teal: "#0C7B93",
-  ltTeal: "#27AAB0", accent: "#A5F3FC", white: "#FFFFFF",
-  bg: "#F0F9FF", text: "#1E293B", muted: "#64748B",
-  border: "#CBD5E1", success: "#16A34A", danger: "#DC2626",
+  navy: "var(--c-navy)",
+  blue: "var(--c-blue)",
+  teal: "var(--c-teal)",
+  ltTeal: "var(--c-ltTeal)",
+  accent: "var(--c-accent)",
+  white: "var(--c-white)",
+  bg: "var(--c-bg)",
+  text: "var(--c-text)",
+  muted: "var(--c-muted)",
+  border: "var(--c-border)",
+  success: "var(--c-success)",
+  danger: "var(--c-danger)",
+};
+
+const THEME_PRESETS = {
+  confident: {
+    label_th: "โทนมั่นใจ",
+    label_en: "Confident",
+    vars: {
+      "--c-navy": "#0B2447",
+      "--c-blue": "#19376D",
+      "--c-teal": "#0C7B93",
+      "--c-ltTeal": "#27AAB0",
+      "--c-accent": "#A5F3FC",
+      "--c-white": "#FFFFFF",
+      "--c-bg": "#F0F9FF",
+      "--c-text": "#1E293B",
+      "--c-muted": "#64748B",
+      "--c-border": "#CBD5E1",
+      "--c-success": "#16A34A",
+      "--c-danger": "#DC2626",
+      "--font-base": "'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      "--font-display": "'Cormorant Garamond', Georgia, serif",
+      "--radius-card": "16px",
+      "--radius-pill": "999px",
+      "--shadow-card": "0 10px 30px rgba(2,6,23,.06)",
+    },
+  },
+  sweet: {
+    label_th: "โทนอ่อนหวาน",
+    label_en: "Sweet",
+    vars: {
+      "--c-navy": "#2A1E3D",
+      "--c-blue": "#5B2C83",
+      "--c-teal": "#E24E8A",
+      "--c-ltTeal": "#F58BB3",
+      "--c-accent": "#FFE1EC",
+      "--c-white": "#FFFFFF",
+      "--c-bg": "#FFF7FB",
+      "--c-text": "#2B2430",
+      "--c-muted": "#7B6C7A",
+      "--c-border": "#E8D7E2",
+      "--c-success": "#16A34A",
+      "--c-danger": "#DC2626",
+      "--font-base": "'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      "--font-display": "'Cormorant Garamond', Georgia, serif",
+      "--radius-card": "22px",
+      "--radius-pill": "999px",
+      "--shadow-card": "0 14px 44px rgba(43,36,48,.10)",
+    },
+  },
+  strong: {
+    label_th: "โทนเข้มแข็ง",
+    label_en: "Strong",
+    vars: {
+      "--c-navy": "#071A1C",
+      "--c-blue": "#0D3B3E",
+      "--c-teal": "#0BBEAA",
+      "--c-ltTeal": "#2DE3CF",
+      "--c-accent": "#B7FFF6",
+      "--c-white": "#FFFFFF",
+      "--c-bg": "#F2FFFD",
+      "--c-text": "#062427",
+      "--c-muted": "#3B6A6E",
+      "--c-border": "#BFE6E1",
+      "--c-success": "#16A34A",
+      "--c-danger": "#DC2626",
+      "--font-base": "'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      "--font-display": "'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      "--radius-card": "12px",
+      "--radius-pill": "10px",
+      "--shadow-card": "0 8px 22px rgba(6,36,39,.10)",
+    },
+  },
+};
+
+const applyTheme = (themePreset, overridesText = "") => {
+  const preset = THEME_PRESETS[themePreset] || THEME_PRESETS.confident;
+  let overrides = {};
+  try {
+    if (overridesText && typeof overridesText === "string") overrides = JSON.parse(overridesText);
+  } catch {}
+  const vars = { ...preset.vars, ...(overrides || {}) };
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
 };
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
@@ -182,7 +273,7 @@ function LockScreen({ onUnlock }) {
             url.searchParams.delete("code");
             window.history.replaceState({}, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "") + url.hash);
           } catch {}
-          onUnlock(code, r.role, r.hospital);
+          onUnlock(code, r.role, r.hospital, r.theme_preset, r.theme_overrides);
         }
       } catch {
         setMsg("เชื่อมต่อ server ไม่ได้");
@@ -204,7 +295,7 @@ function LockScreen({ onUnlock }) {
         setShake(true); setPw(""); setMsg("รหัสผ่านไม่ถูกต้อง");
         setTimeout(() => { setShake(false); setMsg(""); }, 800);
       } else {
-        onUnlock(pw.trim(), r.role, r.hospital);
+        onUnlock(pw.trim(), r.role, r.hospital, r.theme_preset, r.theme_overrides);
       }
     } catch {
       setMsg("เชื่อมต่อ server ไม่ได้");
@@ -342,6 +433,10 @@ function Portfolio({ password, role, hospital, onLogout }) {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
+    // Apply theme based on current access code (per-hospital)
+    applyTheme(data?.theme_preset || "confident", data?.theme_overrides || "");
+  }, [data?.theme_preset, data?.theme_overrides]);
+  useEffect(() => {
     const t = data?.profile?.site_title;
     if (t) document.title = t;
   }, [data]);
@@ -372,7 +467,27 @@ function Portfolio({ password, role, hospital, onLogout }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        .card { transition: transform .2s, box-shadow .2s; }
+        :root {
+          --c-navy: #0B2447;
+          --c-blue: #19376D;
+          --c-teal: #0C7B93;
+          --c-ltTeal: #27AAB0;
+          --c-accent: #A5F3FC;
+          --c-white: #FFFFFF;
+          --c-bg: #F0F9FF;
+          --c-text: #1E293B;
+          --c-muted: #64748B;
+          --c-border: #CBD5E1;
+          --c-success: #16A34A;
+          --c-danger: #DC2626;
+          --font-base: 'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          --font-display: 'Cormorant Garamond', Georgia, serif;
+          --radius-card: 16px;
+          --radius-pill: 999px;
+          --shadow-card: 0 10px 30px rgba(2,6,23,.06);
+        }
+        body { font-family: var(--font-base); }
+        .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; }
         .card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.10)!important; }
         .edit-btn { opacity:0; transition:opacity .2s; }
         .edit-wrap:hover .edit-btn { opacity:1; }
@@ -1431,7 +1546,7 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
 
 // ─── ADMIN TAB ────────────────────────────────────────────────────────────────
 function AdminTab({ passwords, password, onRefresh, showToast }) {
-  const [form, setForm] = useState({ code:"", hospital_name:"", role:"viewer", note:"" });
+  const [form, setForm] = useState({ code:"", hospital_name:"", role:"viewer", note:"", theme_preset:"confident", theme_overrides:"" });
   const [adding, setAdding] = useState(false);
   const [qrFor, setQrFor] = useState(null); // { hospital_name, url }
 
@@ -1465,8 +1580,15 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
     if (!form.code || !form.hospital_name) return;
     await API("passwords", { method:"POST", body:JSON.stringify(form) }, password);
     showToast("✓ เพิ่มรหัสผ่านแล้ว");
-    setForm({ code:"", hospital_name:"", role:"viewer", note:"" });
+    setForm({ code:"", hospital_name:"", role:"viewer", note:"", theme_preset:"confident", theme_overrides:"" });
     setAdding(false);
+    onRefresh();
+  };
+
+  const updateRow = async (row, patch) => {
+    const next = { ...row, ...patch };
+    await API(`passwords/${row.id}`, { method:"PUT", body:JSON.stringify(next) }, password);
+    showToast("✓ บันทึกแล้ว");
     onRefresh();
   };
 
@@ -1492,7 +1614,7 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
             <thead>
               <tr style={{ background:"#F8FAFC" }}>
-                {["โรงพยาบาล","รหัสผ่าน","Role","หมายเหตุ","เข้าล่าสุด","ลิงก์/QR",""].map((h,i) => (
+                {["โรงพยาบาล","รหัสผ่าน","Role","หมายเหตุ","เข้าล่าสุด","ธีม","ลิงก์/QR",""].map((h,i) => (
                   <th key={i} style={{ padding:"10px 14px", textAlign:"left", color:C.muted, fontSize:11, letterSpacing:.5, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -1511,6 +1633,17 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
                   </td>
                   <td style={{ padding:"11px 14px", color:C.muted, fontSize:12 }}>{p.note || "—"}</td>
                   <td style={{ padding:"11px 14px", color:C.muted, fontSize:11 }}>{p.last_access?.slice(0,16) || "ยังไม่เคยเข้า"}</td>
+                  <td style={{ padding:"11px 14px" }}>
+                    <select
+                      value={p.theme_preset || "confident"}
+                      onChange={(e) => updateRow(p, { theme_preset: e.target.value })}
+                      style={{ padding:"6px 10px", border:`1px solid ${C.border}`, borderRadius:10, fontSize:12, fontFamily:"inherit", background:"#fff" }}
+                    >
+                      <option value="sweet">โทนอ่อนหวาน</option>
+                      <option value="strong">โทนเข้มแข็ง</option>
+                      <option value="confident">โทนมั่นใจ</option>
+                    </select>
+                  </td>
                   <td style={{ padding:"11px 14px" }}>
                     <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                       {btn("คัดลอกลิงก์", () => copyText(buildViewerLink(p.code)), { background:"#EFF6FF", color:C.blue, fontSize:11, padding:"4px 10px" })}
@@ -1572,6 +1705,17 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
               </div>
             ))}
             <div>
+              <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>ธีม (Theme)</div>
+              <select value={form.theme_preset || "confident"} onChange={e => setForm(f=>({...f,theme_preset:e.target.value}))} style={{
+                width:"100%", padding:"9px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:"inherit",
+                background:"#fff", color:C.text,
+              }}>
+                <option value="sweet">โทนอ่อนหวาน</option>
+                <option value="strong">โทนเข้มแข็ง</option>
+                <option value="confident">โทนมั่นใจ</option>
+              </select>
+            </div>
+            <div>
               <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Role</div>
               <select value={form.role} onChange={e => setForm(f=>({...f,role:e.target.value}))} style={{
                 width:"100%", padding:"9px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:"inherit",
@@ -1600,8 +1744,8 @@ export default function App() {
     } catch { return null; }
   });
 
-  const handleUnlock = (pw, role, hospital) => {
-    const s = { pw, role, hospital };
+  const handleUnlock = (pw, role, hospital, theme_preset, theme_overrides) => {
+    const s = { pw, role, hospital, theme_preset, theme_overrides };
     sessionStorage.setItem("portfolio_session", JSON.stringify(s));
     setSession(s);
   };
