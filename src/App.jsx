@@ -609,7 +609,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"var(--font-base)", zoom:"var(--font-scale, 1)" }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"var(--font-base)" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
@@ -657,7 +657,10 @@ function Portfolio({ password, role, hospital, onLogout }) {
           .brand-tagline { font-size: 9px !important; letter-spacing: .8px !important; }
           .tabs-btn { padding: 6px 10px !important; font-size: 11px !important; }
           .nav-wrap { display: none !important; }
+          .desktop-actions { display: none !important; }
           .hamburger-btn { display: inline-flex !important; }
+          .mobile-menu-overlay { padding: 10px !important; }
+          .mobile-menu-panel { width: min(100%, 390px) !important; border-radius: 14px !important; }
           .hero { flex-direction: column !important; align-items: flex-start !important; padding: 26px 20px !important; gap: 16px !important; }
           .hero-avatar { width: 104px !important; height: 104px !important; border-radius: 20px !important; }
           .projects-grid { grid-template-columns: 1fr !important; }
@@ -726,7 +729,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
             }} className="tabs-btn">{t.label}</button>
           ))}
         </nav>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <div className="desktop-actions" style={{ display:"flex", alignItems:"center", gap:10 }}>
           {btn(ui.dark ? (isEn ? "Light" : "สว่าง") : (isEn ? "Dark" : "มืด"), () => setUi(u => ({ ...u, dark: !u.dark })), {
             background:"rgba(255,255,255,.08)",
             border:`1px solid rgba(255,255,255,.18)`,
@@ -788,6 +791,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div
+          className="mobile-menu-overlay"
           onClick={(e) => e.target === e.currentTarget && setMobileMenuOpen(false)}
           style={{
             position:"fixed",
@@ -797,7 +801,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
             padding:14,
           }}
         >
-          <div style={{
+          <div className="mobile-menu-panel" style={{
             maxWidth: 420,
             margin:"0 auto",
             background:"var(--c-surface)",
@@ -811,7 +815,21 @@ function Portfolio({ password, role, hospital, onLogout }) {
               <button onClick={() => setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:18 }}>✕</button>
             </div>
             <div style={{ padding:"10px 10px", display:"flex", gap:8, flexWrap:"wrap", borderBottom:`1px solid ${C.border}` }}>
-              {btn(ui.dark ? (isEn ? "Light mode" : "โหมดสว่าง") : (isEn ? "Dark mode" : "โหมดมืด"), () => setUi(u => ({ ...u, dark: !u.dark })), { background:C.blue, color:"#fff", fontSize:12, padding:"7px 12px" })}
+              {btn(ui.dark ? (isEn ? "Light mode" : "โหมดสว่าง") : (isEn ? "Dark mode" : "โหมดมืด"), () => setUi(u => ({ ...u, dark: !u.dark })), { background:C.blue, color:"#fff", fontSize:12, padding:"7px 12px", flex:"1 1 120px" })}
+              <div style={{ display:"flex", gap:6, background:C.surface2, border:`1px solid ${C.border}`, padding:3, borderRadius:999, flexShrink:0 }}>
+                <button onClick={() => { setLang("th"); try { localStorage.setItem("portfolio_lang","th"); } catch {} }} style={{
+                  border:"none", cursor:"pointer", borderRadius:999,
+                  padding:"5px 11px", fontSize:12, fontFamily:"inherit",
+                  background: lang==="th" ? C.teal : "transparent",
+                  color: lang==="th" ? "#fff" : C.muted,
+                }}>TH</button>
+                <button onClick={() => { setLang("en"); try { localStorage.setItem("portfolio_lang","en"); } catch {} }} style={{
+                  border:"none", cursor:"pointer", borderRadius:999,
+                  padding:"5px 11px", fontSize:12, fontFamily:"inherit",
+                  background: lang==="en" ? C.teal : "transparent",
+                  color: lang==="en" ? "#fff" : C.muted,
+                }}>EN</button>
+              </div>
               <div style={{
                 display:"flex",
                 alignItems:"center",
@@ -857,12 +875,22 @@ function Portfolio({ password, role, hospital, onLogout }) {
                   {t.label}
                 </button>
               ))}
+              {btn(isEn ? "Logout" : "ออกจากระบบ", onLogout, {
+                background:"transparent",
+                border:`1px solid ${C.border}`,
+                color:C.muted,
+                fontSize:12,
+                padding:"10px 12px",
+                borderRadius:12,
+                textAlign:"left",
+                width:"100%",
+              })}
             </div>
           </div>
         </div>
       )}
 
-      <main className="main-wrap" style={{ maxWidth:980, margin:"0 auto", padding:"36px 24px", animation:"fadeUp .4s ease" }} key={tab}>
+      <main className="main-wrap" style={{ maxWidth:980, margin:"0 auto", padding:"36px 24px", animation:"fadeUp .4s ease", zoom:"var(--font-scale, 1)" }} key={tab}>
 
         {/* ── ABOUT ─────────────────────────────────────────────────── */}
         {tab === "about" && (
