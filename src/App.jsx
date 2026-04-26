@@ -537,12 +537,12 @@ function Portfolio({ password, role, hospital, onLogout }) {
     root.style.setProperty("--font-scale", String(ui.fontScale || 1));
     // Apply dark mode by overriding core surface variables inline
     if (ui.dark) {
-      root.style.setProperty("--c-bg", "#070B12");
-      root.style.setProperty("--c-text", "rgba(255,255,255,.92)");
-      root.style.setProperty("--c-muted", "rgba(255,255,255,.62)");
-      root.style.setProperty("--c-border", "rgba(148,163,184,.25)");
-      root.style.setProperty("--c-surface", "rgba(15,23,42,.92)");
-      root.style.setProperty("--c-surface2", "rgba(15,23,42,.55)");
+      root.style.setProperty("--c-bg", "#000000");
+      root.style.setProperty("--c-text", "#FFFFFF");
+      root.style.setProperty("--c-muted", "rgba(255,255,255,.70)");
+      root.style.setProperty("--c-border", "rgba(255,255,255,.14)");
+      root.style.setProperty("--c-surface", "#0B1220");
+      root.style.setProperty("--c-surface2", "#0A1528");
       root.style.setProperty("--shadow-card", "0 10px 28px rgba(0,0,0,.35)");
     } else {
       // Reset back to light defaults. Theme preset may set these too; this keeps UI toggle deterministic.
@@ -556,12 +556,11 @@ function Portfolio({ password, role, hospital, onLogout }) {
     }
   }, [ui]);
 
-  const cycleFont = () => {
-    const steps = [0.95, 1, 1.1, 1.2];
-    const idx = Math.max(0, steps.findIndex(s => Math.abs(s - (ui.fontScale || 1)) < 0.001));
-    const next = steps[(idx + 1) % steps.length];
-    setUi(u => ({ ...u, fontScale: next }));
+  const setFontPercent = (pct) => {
+    const p = Math.max(90, Math.min(160, Number(pct) || 100));
+    setUi(u => ({ ...u, fontScale: p / 100 }));
   };
+  const fontPercent = Math.round((ui.fontScale || 1) * 100);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -728,14 +727,28 @@ function Portfolio({ password, role, hospital, onLogout }) {
             padding:"6px 10px",
             borderRadius:999,
           })}
-          {btn(isEn ? "A" : "ตัวอักษร", cycleFont, {
-            background:"rgba(255,255,255,.08)",
-            border:`1px solid rgba(255,255,255,.18)`,
-            color:"rgba(255,255,255,.85)",
-            fontSize:11,
-            padding:"6px 10px",
+          <div style={{
+            display:"flex",
+            alignItems:"center",
+            gap:8,
+            padding:"4px 10px",
             borderRadius:999,
-          })}
+            background:"rgba(255,255,255,.08)",
+            border:"1px solid rgba(255,255,255,.18)",
+            color:"rgba(255,255,255,.85)",
+          }}>
+            <span style={{ fontSize:11, opacity:.9, whiteSpace:"nowrap" }}>{isEn ? "Font" : "ตัวอักษร"} {fontPercent}%</span>
+            <input
+              type="range"
+              min="90"
+              max="160"
+              step="5"
+              value={fontPercent}
+              onChange={(e) => setFontPercent(e.target.value)}
+              style={{ width:110 }}
+              aria-label="font size"
+            />
+          </div>
           <div style={{ display:"flex", gap:4, background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.18)", padding:3, borderRadius:999 }}>
             <button onClick={() => { setLang("th"); try { localStorage.setItem("portfolio_lang","th"); } catch {} }} style={{
               border:"none", cursor:"pointer", borderRadius:999,
@@ -791,7 +804,29 @@ function Portfolio({ password, role, hospital, onLogout }) {
             </div>
             <div style={{ padding:"10px 10px", display:"flex", gap:8, flexWrap:"wrap", borderBottom:`1px solid ${C.border}` }}>
               {btn(ui.dark ? (isEn ? "Light mode" : "โหมดสว่าง") : (isEn ? "Dark mode" : "โหมดมืด"), () => setUi(u => ({ ...u, dark: !u.dark })), { background:C.blue, color:"#fff", fontSize:12, padding:"7px 12px" })}
-              {btn(isEn ? "Font size" : "ขนาดตัวอักษร", cycleFont, { background:"#F1F5F9", color:C.text, fontSize:12, padding:"7px 12px" })}
+              <div style={{
+                display:"flex",
+                alignItems:"center",
+                gap:10,
+                padding:"7px 12px",
+                borderRadius:12,
+                background:"var(--c-surface2)",
+                border:`1px solid ${C.border}`,
+                color:C.text,
+                width:"100%",
+              }}>
+                <div style={{ fontSize:12, whiteSpace:"nowrap" }}>{isEn ? "Font size" : "ขนาดตัวอักษร"} {fontPercent}%</div>
+                <input
+                  type="range"
+                  min="90"
+                  max="160"
+                  step="5"
+                  value={fontPercent}
+                  onChange={(e) => setFontPercent(e.target.value)}
+                  style={{ width:"100%", accentColor: C.teal }}
+                  aria-label="font size"
+                />
+              </div>
             </div>
             <div style={{ padding:"10px 10px", display:"flex", flexDirection:"column", gap:6 }}>
               {TABS.map(t => (
