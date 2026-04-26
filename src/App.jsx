@@ -109,8 +109,14 @@ const applyTheme = (themePreset, overridesText = "") => {
 // ─── tiny helpers ────────────────────────────────────────────────────────────
 const btn = (label, onClick, style = {}) => (
   <button onClick={onClick} style={{
-    border: "none", cursor: "pointer", borderRadius: 6, padding: "7px 16px",
-    fontSize: 13, fontFamily: "inherit", transition: "opacity .15s", ...style,
+    border: "none",
+    cursor: "pointer",
+    borderRadius: "var(--radius-btn, 12px)",
+    padding: "7px 16px",
+    fontSize: 13,
+    fontFamily: "inherit",
+    transition: "opacity .15s",
+    ...style,
   }}
     onMouseOver={e => e.currentTarget.style.opacity = ".8"}
     onMouseOut={e => e.currentTarget.style.opacity = "1"}
@@ -139,9 +145,9 @@ function EditOverlay({ title, children, onClose }) {
       zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: "#fff", borderRadius: 16, padding: "28px 32px",
+        background: "#fff", borderRadius: "var(--radius-card)", padding: "28px 32px",
         maxWidth: 600, width: "100%", maxHeight: "85vh", overflowY: "auto",
-        boxShadow: "0 24px 64px rgba(0,0,0,.25)",
+        boxShadow: "var(--shadow-modal, 0 24px 64px rgba(0,0,0,.25))",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <h3 style={{ margin: 0, color: C.navy, fontSize: 17 }}>{title}</h3>
@@ -353,7 +359,7 @@ function LockScreen({ onUnlock }) {
         </div>
 
         <div style={{ color:"rgba(255,255,255,.5)", fontSize:11, letterSpacing:4, marginBottom:8, textTransform:"uppercase" }}>Private Portfolio</div>
-        <h1 className="lock-title" style={{ fontFamily:"'Cormorant Garamond', Georgia", color:"#fff", fontSize:30, fontWeight:400, margin:"0 0 4px", lineHeight:1.15 }}>
+        <h1 className="lock-title display-font" style={{ color:"#fff", fontSize:30, fontWeight:400, margin:"0 0 4px", lineHeight:1.15 }}>
           <span>{lockName.first || "—"}</span>
           {lockName.last ? <span className="name-last"> {lockName.last}</span> : null}
         </h1>
@@ -448,7 +454,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
   };
 
   if (loading) return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:C.bg, fontFamily:"'Sarabun',Georgia,serif" }}>
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:C.bg, fontFamily:"var(--font-base)" }}>
       <div style={{ color:C.teal, fontSize:14 }}>{isEn ? "Loading…" : "กำลังโหลด…"}</div>
     </div>
   );
@@ -463,7 +469,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Sarabun',Georgia,serif" }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"var(--font-base)" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
@@ -484,14 +490,17 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --font-display: 'Cormorant Garamond', Georgia, serif;
           --radius-card: 16px;
           --radius-pill: 999px;
+          --radius-btn: 12px;
           --shadow-card: 0 10px 30px rgba(2,6,23,.06);
+          --shadow-modal: 0 24px 64px rgba(0,0,0,.25);
         }
         body { font-family: var(--font-base); }
-        .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; }
+        .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; border-radius: var(--radius-card)!important; }
         .card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.10)!important; }
         .edit-btn { opacity:0; transition:opacity .2s; }
         .edit-wrap:hover .edit-btn { opacity:1; }
         input:focus, textarea:focus { border-color:${C.teal}!important; box-shadow:0 0 0 3px rgba(12,123,147,.12); }
+        .display-font { font-family: var(--font-display); }
         @media (max-width: 820px) {
           .main-wrap { padding: 28px 16px !important; }
           .nav-wrap { overflow-x: auto; scrollbar-width: none; }
@@ -810,11 +819,11 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       {/* Hero */}
       <div style={{
         background:`linear-gradient(135deg,${C.navy},${C.teal})`,
-        borderRadius:20, padding:"40px 48px", marginBottom:28,
+        borderRadius:"var(--radius-card)", padding:"40px 48px", marginBottom:28,
         display:"flex", gap:36, alignItems:"center",
       }} className="hero">
         <div style={{
-          width:124, height:124, borderRadius:22,
+          width:124, height:124, borderRadius:"calc(var(--radius-card) + 6px)",
           background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.28)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:44, flexShrink:0,
           overflow:"hidden",
@@ -831,7 +840,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
         </div>
         <div>
           <div style={{ color:C.accent, fontSize:11, letterSpacing:3, marginBottom:6, textTransform:"uppercase" }}>Private Portfolio</div>
-          <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia", color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400, lineHeight:1.12 }}>
+          <h1 className="display-font" style={{ color:"#fff", fontSize:32, margin:"0 0 4px", fontWeight:400, lineHeight:1.12 }}>
             <span>{aboutName.first || "—"}</span>
             {aboutName.last ? <span className="name-last"> {aboutName.last}</span> : null}
           </h1>
@@ -946,7 +955,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
 
       {/* Headline */}
       <div style={{
-        background:"#fff", borderRadius:12, padding:"18px 24px", marginBottom:20,
+        background:"#fff", borderRadius:"var(--radius-card)", padding:"18px 24px", marginBottom:20,
         border:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:12,
       }} className="edit-wrap">
         <span style={{ fontSize:18 }}>💼</span>
@@ -955,7 +964,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       </div>
 
       {/* Bio paragraphs */}
-      <div style={{ background:"#fff", borderRadius:16, padding:"28px 32px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"28px 32px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Bio" : "ประวัติส่วนตัว"}</h2>
         </div>
@@ -968,7 +977,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       </div>
 
       {/* Awards */}
-      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
           <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Awards / Achievements" : "ผลงานที่เคยได้รับ"}</h2>
           {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
@@ -1031,7 +1040,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       </div>
 
       {/* Contact */}
-      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}` }}>
+      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}` }}>
         <h2 style={{ color:C.navy, fontSize:16, margin:"0 0 16px" }}>Contact</h2>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           {[
