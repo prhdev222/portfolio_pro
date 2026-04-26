@@ -168,7 +168,7 @@ const btn = (label, onClick, style = {}) => (
     cursor: "pointer",
     borderRadius: "var(--radius-btn, 12px)",
     padding: "7px 16px",
-    fontSize: 13,
+    fontSize: "calc(13px * var(--font-scale, 1))",
     fontFamily: "inherit",
     transition: "opacity .15s",
     ...style,
@@ -181,7 +181,7 @@ const btn = (label, onClick, style = {}) => (
 const inp = (value, onChange, placeholder = "", multiline = false, rows = 3) => {
   const style = {
     width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`,
-    borderRadius: 8, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box",
+    borderRadius: 8, fontSize: "calc(13px * var(--font-scale, 1))", fontFamily: "inherit", boxSizing: "border-box",
     outline: "none", resize: multiline ? "vertical" : "none",
     background: "#fff", color: C.text,
   };
@@ -200,7 +200,7 @@ function EditOverlay({ title, children, onClose }) {
       zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: "#fff", borderRadius: "var(--radius-card)", padding: "28px 32px",
+        background: "var(--c-surface)", borderRadius: "var(--radius-card)", padding: "28px 32px",
         maxWidth: 600, width: "100%", maxHeight: "85vh", overflowY: "auto",
         boxShadow: "var(--shadow-modal, 0 24px 64px rgba(0,0,0,.25))",
       }}>
@@ -516,8 +516,34 @@ function Portfolio({ password, role, hospital, onLogout }) {
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(""), 2500); };
   const isEn = lang === "en";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [ui, setUi] = useState(() => {
+    try {
+      const raw = localStorage.getItem("portfolio_ui");
+      const v = raw ? JSON.parse(raw) : null;
+      return {
+        dark: !!v?.dark,
+        fontScale: typeof v?.fontScale === "number" ? v.fontScale : 1,
+      };
+    } catch {
+      const prefersDark = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+      return { dark: !!prefersDark, fontScale: 1 };
+    }
+  });
 
   useEffect(() => { setMobileMenuOpen(false); }, [tab]);
+  useEffect(() => {
+    try { localStorage.setItem("portfolio_ui", JSON.stringify(ui)); } catch {}
+    const root = document.documentElement;
+    root.style.setProperty("--font-scale", String(ui.fontScale || 1));
+    root.classList.toggle("dark", !!ui.dark);
+  }, [ui]);
+
+  const cycleFont = () => {
+    const steps = [0.95, 1, 1.1, 1.2];
+    const idx = Math.max(0, steps.findIndex(s => Math.abs(s - (ui.fontScale || 1)) < 0.001));
+    const next = steps[(idx + 1) % steps.length];
+    setUi(u => ({ ...u, fontScale: next }));
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -574,8 +600,11 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --c-text: #1E293B;
           --c-muted: #64748B;
           --c-border: #CBD5E1;
+          --c-surface: #FFFFFF;
+          --c-surface2: #F8FAFC;
           --c-success: #16A34A;
           --c-danger: #DC2626;
+          --font-scale: 1;
           --font-base: 'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
           --font-display: 'Cormorant Garamond', Georgia, serif;
           --radius-card: 16px;
@@ -583,6 +612,14 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --radius-btn: 12px;
           --shadow-card: 0 10px 30px rgba(2,6,23,.06);
           --shadow-modal: 0 24px 64px rgba(0,0,0,.25);
+        }
+        :root.dark {
+          --c-bg: #070B12;
+          --c-text: rgba(255,255,255,.92);
+          --c-muted: rgba(255,255,255,.62);
+          --c-border: rgba(148,163,184,.25);
+          --c-surface: rgba(15,23,42,.92);
+          --c-surface2: rgba(15,23,42,.55);
         }
         body { font-family: var(--font-base); }
         .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; border-radius: var(--radius-card)!important; }
@@ -672,6 +709,22 @@ function Portfolio({ password, role, hospital, onLogout }) {
           ))}
         </nav>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          {btn(ui.dark ? (isEn ? "Light" : "สว่าง") : (isEn ? "Dark" : "มืด"), () => setUi(u => ({ ...u, dark: !u.dark })), {
+            background:"rgba(255,255,255,.08)",
+            border:`1px solid rgba(255,255,255,.18)`,
+            color:"rgba(255,255,255,.85)",
+            fontSize:11,
+            padding:"6px 10px",
+            borderRadius:999,
+          })}
+          {btn(isEn ? "A" : "ตัวอักษร", cycleFont, {
+            background:"rgba(255,255,255,.08)",
+            border:`1px solid rgba(255,255,255,.18)`,
+            color:"rgba(255,255,255,.85)",
+            fontSize:11,
+            padding:"6px 10px",
+            borderRadius:999,
+          })}
           <div style={{ display:"flex", gap:4, background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.18)", padding:3, borderRadius:999 }}>
             <button onClick={() => { setLang("th"); try { localStorage.setItem("portfolio_lang","th"); } catch {} }} style={{
               border:"none", cursor:"pointer", borderRadius:999,
@@ -715,7 +768,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
           <div style={{
             maxWidth: 420,
             margin:"0 auto",
-            background:"#fff",
+            background:"var(--c-surface)",
             borderRadius:16,
             overflow:"hidden",
             border:`1px solid ${C.border}`,
@@ -724,6 +777,10 @@ function Portfolio({ password, role, hospital, onLogout }) {
             <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${C.border}` }}>
               <div style={{ color:C.navy, fontWeight:700, fontSize:13 }}>{isEn ? "Menu" : "เมนู"}</div>
               <button onClick={() => setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:18 }}>✕</button>
+            </div>
+            <div style={{ padding:"10px 10px", display:"flex", gap:8, flexWrap:"wrap", borderBottom:`1px solid ${C.border}` }}>
+              {btn(ui.dark ? (isEn ? "Light mode" : "โหมดสว่าง") : (isEn ? "Dark mode" : "โหมดมืด"), () => setUi(u => ({ ...u, dark: !u.dark })), { background:C.blue, color:"#fff", fontSize:12, padding:"7px 12px" })}
+              {btn(isEn ? "Font size" : "ขนาดตัวอักษร", cycleFont, { background:"#F1F5F9", color:C.text, fontSize:12, padding:"7px 12px" })}
             </div>
             <div style={{ padding:"10px 10px", display:"flex", flexDirection:"column", gap:6 }}>
               {TABS.map(t => (
