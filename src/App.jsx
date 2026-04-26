@@ -312,16 +312,38 @@ function LockScreen({ onUnlock }) {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: `linear-gradient(135deg, ${C.navy} 0%, ${C.teal} 70%, ${C.navy} 100%)`,
-      fontFamily: "'Sarabun', Georgia, serif", position: "relative", overflow: "hidden",
+      background: `linear-gradient(135deg, var(--c-navy, #0B2447) 0%, var(--c-teal, #0C7B93) 70%, var(--c-navy, #0B2447) 100%)`,
+      fontFamily: "var(--font-base, 'Sarabun', Georgia, serif)", position: "relative", overflow: "hidden",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+        :root {
+          --c-navy: #0B2447;
+          --c-blue: #19376D;
+          --c-teal: #0C7B93;
+          --c-ltTeal: #27AAB0;
+          --c-accent: #A5F3FC;
+          --c-white: #FFFFFF;
+          --c-bg: #F0F9FF;
+          --c-text: #1E293B;
+          --c-muted: #64748B;
+          --c-border: #CBD5E1;
+          --c-success: #16A34A;
+          --c-danger: #DC2626;
+          --font-base: 'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          --font-display: 'Cormorant Garamond', Georgia, serif;
+          --radius-card: 16px;
+          --radius-pill: 999px;
+          --radius-btn: 12px;
+          --shadow-card: 0 10px 30px rgba(2,6,23,.06);
+          --shadow-modal: 0 24px 64px rgba(0,0,0,.25);
+        }
         @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
         @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
         @keyframes ripple { 0%{transform:scale(0.8);opacity:.4} 100%{transform:scale(2.5);opacity:0} }
         @keyframes pulse { 0%,100%{opacity:.06} 50%{opacity:.13} }
         .lock-ring { animation: pulse 3s ease-in-out infinite; }
+        .display-font { font-family: var(--font-display); }
         @media (max-width: 640px) {
           .lock-wrap { max-width: 360px !important; }
           .lock-title { font-size: 26px !important; }
@@ -363,7 +385,7 @@ function LockScreen({ onUnlock }) {
           <span>{lockName.first || "—"}</span>
           {lockName.last ? <span className="name-last"> {lockName.last}</span> : null}
         </h1>
-        <div className="lock-sub" style={{ color:C.accent, fontSize:13, marginBottom:36, letterSpacing:.5 }}>
+        <div className="lock-sub" style={{ color:"var(--c-accent, #A5F3FC)", fontSize:13, marginBottom:36, letterSpacing:.5 }}>
           {publicProfile?.cover_subtitle || publicProfile?.title || ""}
         </div>
 
@@ -390,7 +412,7 @@ function LockScreen({ onUnlock }) {
             {show ? "🙈" : "👁"}
           </button>
           <button onClick={attempt} style={{
-            background: C.teal, border:"none", padding:"0 20px", color:"#fff",
+            background: "var(--c-teal, #0C7B93)", border:"none", padding:"0 20px", color:"#fff",
             cursor:"pointer", fontSize:18, fontFamily:"monospace",
           }}>
             {loading ? "…" : "→"}
