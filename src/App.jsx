@@ -107,15 +107,27 @@ const applyTheme = (themePreset, overridesText = "") => {
 };
 
 // ─── Contact icons (inline SVG) ───────────────────────────────────────────────
+const CONTACT_ICON_SIZE = 22;
+
 const IconWrap = ({ children, title }) => (
-  <span title={title} style={{ width:18, height:18, display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+  <span
+    title={title}
+    style={{
+      width: CONTACT_ICON_SIZE,
+      height: CONTACT_ICON_SIZE,
+      display:"inline-flex",
+      alignItems:"center",
+      justifyContent:"center",
+      flexShrink:0,
+    }}
+  >
     {children}
   </span>
 );
 
 const GmailIcon = () => (
   <IconWrap title="Gmail">
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={CONTACT_ICON_SIZE} height={CONTACT_ICON_SIZE} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#EA4335" d="M2 6.5C2 5.12 3.12 4 4.5 4h15C20.88 4 22 5.12 22 6.5v.64l-10 6.25-10-6.25V6.5z"/>
       <path fill="#34A853" d="M22 8.8V17.5c0 1.38-1.12 2.5-2.5 2.5H18V12.7l4-3.9z"/>
       <path fill="#4285F4" d="M2 8.8l4 3.9V20H4.5C3.12 20 2 18.88 2 17.5V8.8z"/>
@@ -126,7 +138,7 @@ const GmailIcon = () => (
 
 const LinkedInIcon = () => (
   <IconWrap title="LinkedIn">
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={CONTACT_ICON_SIZE} height={CONTACT_ICON_SIZE} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#0A66C2" d="M20.45 20.45H17v-5.56c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.66H9.56V9h3.32v1.56h.05c.46-.88 1.58-1.8 3.25-1.8 3.48 0 4.12 2.29 4.12 5.26v6.43zM5.34 7.43a1.94 1.94 0 1 1 0-3.88 1.94 1.94 0 0 1 0 3.88zM6.99 20.45H3.69V9h3.3v11.45z"/>
     </svg>
   </IconWrap>
@@ -134,7 +146,7 @@ const LinkedInIcon = () => (
 
 const LineIcon = () => (
   <IconWrap title="LINE OA">
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={CONTACT_ICON_SIZE} height={CONTACT_ICON_SIZE} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#06C755" d="M19.6 10.4c0-3.63-3.41-6.58-7.6-6.58S4.4 6.77 4.4 10.4c0 3.25 2.71 5.97 6.37 6.48.25.05.6.15.69.34.08.17.06.45.03.63l-.11.66c-.03.19-.17.73.64.4.8-.32 4.32-2.55 5.89-4.37 1.07-1.18 1.79-2.5 1.79-4.17z"/>
       <path fill="#fff" d="M8.1 9.2h1.05v2.75h1.54v.95H8.1V9.2zm3.2 0h1.05v3.7h-1.05V9.2zm2.05 0h1.05l1.5 2.06V9.2h1.05v3.7h-1.05l-1.5-2.06v2.06H13.35V9.2zm4.18 0h2.88v.93h-1.83v.52h1.83v.93h-1.83v.53h1.83v.93h-2.88V9.2z"/>
     </svg>
@@ -143,7 +155,7 @@ const LineIcon = () => (
 
 const GitHubIcon = () => (
   <IconWrap title="GitHub">
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={CONTACT_ICON_SIZE} height={CONTACT_ICON_SIZE} viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#111827" d="M12 .5C5.73.5.75 5.64.75 12.1c0 5.2 3.19 9.6 7.62 11.16.56.11.77-.25.77-.56 0-.28-.01-1.02-.02-2-3.1.7-3.76-1.55-3.76-1.55-.5-1.35-1.23-1.71-1.23-1.71-1-.7.08-.69.08-.69 1.11.08 1.7 1.18 1.7 1.18.98 1.73 2.58 1.23 3.2.94.1-.73.38-1.23.69-1.51-2.47-.29-5.07-1.27-5.07-5.66 0-1.25.42-2.27 1.12-3.07-.11-.29-.49-1.45.11-3.01 0 0 .92-.3 3.02 1.17.88-.25 1.82-.37 2.75-.38.93.01 1.87.13 2.75.38 2.1-1.47 3.02-1.17 3.02-1.17.6 1.56.22 2.72.11 3.01.7.8 1.12 1.82 1.12 3.07 0 4.4-2.6 5.37-5.08 5.65.39.35.73 1.03.73 2.08 0 1.5-.01 2.72-.01 3.09 0 .31.2.68.78.56 4.42-1.56 7.61-5.96 7.61-11.16C23.25 5.64 18.27.5 12 .5z"/>
     </svg>
   </IconWrap>
