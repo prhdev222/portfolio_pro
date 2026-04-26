@@ -589,6 +589,13 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
   };
 
   const isEn = lang === "en";
+  const asHttpUrl = (raw) => {
+    const v = (raw || "").toString().trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) return v;
+    // allow users to paste "www." or domain without protocol
+    return `https://${v.replace(/^\/+/, "")}`;
+  };
   const pick = (key) => {
     // In EN mode, only show EN fields (no TH fallback)
     if (lang === "en") return normalizeText(p[`${key}_en`]) || "";
@@ -943,9 +950,38 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                     <div style={{ color:C.border, fontSize:13 }}>—</div>
                   )
                 ) : (
-                  <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>
-                    {(f.key === "interest" ? pick("interest") : (p[f.key] || "")) || <span style={{ color:C.border }}>—</span>}
-                  </div>
+                  (() => {
+                    const raw = (f.key === "interest" ? pick("interest") : (p[f.key] || "")).toString();
+                    const v = raw.trim();
+                    if (!v) return <div style={{ color:C.border, fontSize:13 }}>—</div>;
+
+                    if (f.key === "email") {
+                      return (
+                        <a
+                          href={`mailto:${v}`}
+                          style={{ color:C.blue, fontSize:13, wordBreak:"break-all", textDecoration:"none" }}
+                        >
+                          {v}
+                        </a>
+                      );
+                    }
+
+                    if (f.key === "linkedin" || f.key === "github") {
+                      const href = asHttpUrl(v);
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color:C.blue, fontSize:13, wordBreak:"break-all", textDecoration:"none" }}
+                        >
+                          {v}
+                        </a>
+                      );
+                    }
+
+                    return <div style={{ color:C.text, fontSize:13, wordBreak:"break-all" }}>{v}</div>;
+                  })()
                 )}
               </div>
               {isAdmin && btn("✏", () => setEditing({ key:f.key, value:normalizeText(p[f.key])||"" }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px", flexShrink:0 })}
