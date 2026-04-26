@@ -76,6 +76,7 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('bio3_en',  ''),
   ('email',    ''),
   ('linkedin', ''),
+  ('line_oa',  ''),
   ('github',   ''),
   ('interest', ''),
   ('interest_en', '');

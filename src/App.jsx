@@ -774,6 +774,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
     { key:"bio3_en", label:"Bio (Paragraph 3) — English" },
     { key:"email", label:"Email" },
     { key:"linkedin", label:"LinkedIn URL" },
+    { key:"line_oa", label:"LINE OA (link)" },
     { key:"github", label:"GitHub" },
     { key:"interest", label:"ความสนใจ / ข้อเสนอ" },
     { key:"interest_en", label:"Interest (English)" },
@@ -1068,6 +1069,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
           {[
             { icon:"📧", label:"Email", key:"email" },
             { icon:"💼", label:"LinkedIn", key:"linkedin" },
+            { icon:"💚", label:"LINE OA", key:"line_oa" },
             { icon:"💻", label:"GitHub", key:"github" },
             { icon:"📅", label: isEn ? "Book a time" : "จองเวลาคุย", key:"booking_url", isBooking:true },
             { icon:"✨", label: isEn ? "Collaboration" : "สนใจร่วมงาน", key:"interest" },
@@ -1116,7 +1118,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                       );
                     }
 
-                    if (f.key === "linkedin" || f.key === "github") {
+                    if (f.key === "linkedin" || f.key === "github" || f.key === "line_oa") {
                       const href = asHttpUrl(v);
                       return (
                         <a
