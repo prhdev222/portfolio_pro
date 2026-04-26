@@ -55,6 +55,7 @@ INSERT OR IGNORE INTO profile (key, value) VALUES
   ('cover_subtitle', ''),
   ('cover_subtitle_en', ''),
   ('avatar_url', ''),
+  ('avatar_link', ''),
   ('booking_url', ''),
   ('header_name', ''),
   ('header_name_en', ''),

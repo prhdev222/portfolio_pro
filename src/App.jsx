@@ -405,21 +405,34 @@ function LockScreen({ onUnlock }) {
         }}/>
       ))}
 
-      <div className="lock-wrap" style={{ animation: "fadeUp .8s ease both", textAlign:"center", zIndex:1, padding:"0 24px", width:"100%", maxWidth:400 }}>
+      <div className="lock-wrap" style={{ animation: "fadeUp .8s ease both", textAlign:"center", zIndex:1, padding:"0 24px", width:"100%", maxWidth:420 }}>
         <div style={{
-          width:96, height:96, borderRadius:18, margin:"0 auto 24px",
+          width:118, height:118, borderRadius:22, margin:"0 auto 22px",
           background:"rgba(255,255,255,.10)", border:"1px solid rgba(255,255,255,.25)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:36,
           overflow:"hidden",
           boxShadow:"0 16px 40px rgba(0,0,0,.25)",
         }}>
           {publicProfile?.avatar_url ? (
-            <img
-              src={publicProfile.avatar_url}
-              alt=""
-              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
-              onClick={() => setViewImg({ src: publicProfile.avatar_url, title: publicProfile?.cover_name || publicProfile?.name || "Profile" })}
-            />
+            (publicProfile?.avatar_link
+              ? (
+                <a href={publicProfile.avatar_link} target="_blank" rel="noreferrer" style={{ display:"block", width:"100%", height:"100%" }}>
+                  <img
+                    src={publicProfile.avatar_url}
+                    alt=""
+                    style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"pointer" }}
+                  />
+                </a>
+              )
+              : (
+                <img
+                  src={publicProfile.avatar_url}
+                  alt=""
+                  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
+                  onClick={() => setViewImg({ src: publicProfile.avatar_url, title: publicProfile?.cover_name || publicProfile?.name || "Profile" })}
+                />
+              )
+            )
           ) : "🩺"}
         </div>
 
@@ -801,6 +814,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
     { key:"name", label:"ชื่อ (ไทย)" },
     { key:"name_en", label:"Name (English)" },
     { key:"avatar_url", label:"รูปโปรไฟล์ (URL รูปภาพ)" },
+    { key:"avatar_link", label:"ลิงก์เมื่อคลิกรูปโปรไฟล์" },
     { key:"booking_url", label:"ลิงก์จองเวลาคุย (Google Calendar)" },
     { key:"education", label:"ประวัติการศึกษา" },
     { key:"education_en", label:"Education (English)" },
@@ -890,19 +904,32 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
         display:"flex", gap:36, alignItems:"center",
       }} className="hero">
         <div style={{
-          width:124, height:124, borderRadius:"calc(var(--radius-card) + 6px)",
+          width:148, height:148, borderRadius:"calc(var(--radius-card) + 6px)",
           background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.28)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:44, flexShrink:0,
           overflow:"hidden",
           boxShadow:"0 18px 48px rgba(0,0,0,.25)",
         }} className="hero-avatar">
           {p.avatar_url ? (
-            <img
-              src={p.avatar_url}
-              alt=""
-              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
-              onClick={() => setViewImg({ src: p.avatar_url, title: p.name || "Profile" })}
-            />
+            (p.avatar_link
+              ? (
+                <a href={p.avatar_link} target="_blank" rel="noreferrer" style={{ display:"block", width:"100%", height:"100%" }}>
+                  <img
+                    src={p.avatar_url}
+                    alt=""
+                    style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"pointer" }}
+                  />
+                </a>
+              )
+              : (
+                <img
+                  src={p.avatar_url}
+                  alt=""
+                  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", cursor:"zoom-in" }}
+                  onClick={() => setViewImg({ src: p.avatar_url, title: p.name || "Profile" })}
+                />
+              )
+            )
           ) : "👩‍⚕️"}
         </div>
         <div>
