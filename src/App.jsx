@@ -168,7 +168,7 @@ const btn = (label, onClick, style = {}) => (
     cursor: "pointer",
     borderRadius: "var(--radius-btn, 12px)",
     padding: "7px 16px",
-    fontSize: "calc(13px * var(--font-scale, 1))",
+    fontSize: 13,
     fontFamily: "inherit",
     transition: "opacity .15s",
     ...style,
@@ -181,7 +181,7 @@ const btn = (label, onClick, style = {}) => (
 const inp = (value, onChange, placeholder = "", multiline = false, rows = 3) => {
   const style = {
     width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`,
-    borderRadius: 8, fontSize: "calc(13px * var(--font-scale, 1))", fontFamily: "inherit", boxSizing: "border-box",
+    borderRadius: 8, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box",
     outline: "none", resize: multiline ? "vertical" : "none",
     background: "#fff", color: C.text,
   };
@@ -535,7 +535,25 @@ function Portfolio({ password, role, hospital, onLogout }) {
     try { localStorage.setItem("portfolio_ui", JSON.stringify(ui)); } catch {}
     const root = document.documentElement;
     root.style.setProperty("--font-scale", String(ui.fontScale || 1));
-    root.classList.toggle("dark", !!ui.dark);
+    // Apply dark mode by overriding core surface variables inline
+    if (ui.dark) {
+      root.style.setProperty("--c-bg", "#070B12");
+      root.style.setProperty("--c-text", "rgba(255,255,255,.92)");
+      root.style.setProperty("--c-muted", "rgba(255,255,255,.62)");
+      root.style.setProperty("--c-border", "rgba(148,163,184,.25)");
+      root.style.setProperty("--c-surface", "rgba(15,23,42,.92)");
+      root.style.setProperty("--c-surface2", "rgba(15,23,42,.55)");
+      root.style.setProperty("--shadow-card", "0 10px 28px rgba(0,0,0,.35)");
+    } else {
+      // Reset back to light defaults. Theme preset may set these too; this keeps UI toggle deterministic.
+      root.style.setProperty("--c-bg", "#F0F9FF");
+      root.style.setProperty("--c-text", "#1E293B");
+      root.style.setProperty("--c-muted", "#64748B");
+      root.style.setProperty("--c-border", "#CBD5E1");
+      root.style.setProperty("--c-surface", "#FFFFFF");
+      root.style.setProperty("--c-surface2", "#F8FAFC");
+      root.style.setProperty("--shadow-card", "0 10px 30px rgba(2,6,23,.06)");
+    }
   }, [ui]);
 
   const cycleFont = () => {
@@ -613,15 +631,8 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --shadow-card: 0 10px 30px rgba(2,6,23,.06);
           --shadow-modal: 0 24px 64px rgba(0,0,0,.25);
         }
-        :root.dark {
-          --c-bg: #070B12;
-          --c-text: rgba(255,255,255,.92);
-          --c-muted: rgba(255,255,255,.62);
-          --c-border: rgba(148,163,184,.25);
-          --c-surface: rgba(15,23,42,.92);
-          --c-surface2: rgba(15,23,42,.55);
-        }
-        body { font-family: var(--font-base); }
+        body { font-family: var(--font-base); font-size: calc(14px * var(--font-scale, 1)); }
+        button, input, textarea, select { font-size: calc(13px * var(--font-scale, 1)); }
         .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; border-radius: var(--radius-card)!important; }
         .card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.10)!important; }
         .edit-btn { opacity:0; transition:opacity .2s; }
