@@ -538,6 +538,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
           .hero { flex-direction: column !important; align-items: flex-start !important; padding: 26px 20px !important; gap: 16px !important; }
           .hero-avatar { width: 104px !important; height: 104px !important; border-radius: 20px !important; }
           .projects-grid { grid-template-columns: 1fr !important; }
+          .contact-grid { grid-template-columns: 1fr !important; }
           .card-img { height: 150px !important; }
           .name-last { display: block; }
         }
@@ -1065,7 +1066,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       {/* Contact */}
       <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}` }}>
         <h2 style={{ color:C.navy, fontSize:16, margin:"0 0 16px" }}>Contact</h2>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+        <div className="contact-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           {[
             { icon:"📧", label:"Email", key:"email" },
             { icon:"💼", label:"LinkedIn", key:"linkedin" },
