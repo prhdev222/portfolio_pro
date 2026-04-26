@@ -17,8 +17,11 @@ const C = {
   white: "var(--c-white)",
   bg: "var(--c-bg)",
   text: "var(--c-text)",
+  heading: "var(--c-heading)",
   muted: "var(--c-muted)",
   border: "var(--c-border)",
+  surface: "var(--c-surface)",
+  surface2: "var(--c-surface2)",
   success: "var(--c-success)",
   danger: "var(--c-danger)",
 };
@@ -106,6 +109,27 @@ const applyTheme = (themePreset, overridesText = "") => {
   Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
 };
 
+const applyUiVars = (ui = {}) => {
+  const root = document.documentElement;
+  root.style.setProperty("--font-scale", String(ui.fontScale || 1));
+  if (ui.dark) {
+    root.style.setProperty("--c-bg", "#000000");
+    root.style.setProperty("--c-text", "#FFFFFF");
+    root.style.setProperty("--c-heading", "#FFFFFF");
+    root.style.setProperty("--c-muted", "rgba(255,255,255,.70)");
+    root.style.setProperty("--c-blue", "#93C5FD");
+    root.style.setProperty("--c-teal", "#2DD4BF");
+    root.style.setProperty("--c-border", "rgba(255,255,255,.14)");
+    root.style.setProperty("--c-surface", "#0B1220");
+    root.style.setProperty("--c-surface2", "#0A1528");
+    root.style.setProperty("--shadow-card", "0 10px 28px rgba(0,0,0,.35)");
+  } else {
+    root.style.setProperty("--c-heading", root.style.getPropertyValue("--c-navy") || "#0B2447");
+    root.style.setProperty("--c-surface", "#FFFFFF");
+    root.style.setProperty("--c-surface2", "#F8FAFC");
+  }
+};
+
 // ─── Contact icons (inline SVG) ───────────────────────────────────────────────
 const CONTACT_ICON_SIZE = 22;
 
@@ -183,7 +207,7 @@ const inp = (value, onChange, placeholder = "", multiline = false, rows = 3) => 
     width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`,
     borderRadius: 8, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box",
     outline: "none", resize: multiline ? "vertical" : "none",
-    background: "#fff", color: C.text,
+    background: C.surface, color: C.text,
   };
   return multiline
     ? <textarea value={value} onChange={e => onChange(e.target.value)}
@@ -381,6 +405,7 @@ function LockScreen({ onUnlock }) {
           --c-white: #FFFFFF;
           --c-bg: #F0F9FF;
           --c-text: #1E293B;
+          --c-heading: #0B2447;
           --c-muted: #64748B;
           --c-border: #CBD5E1;
           --c-success: #16A34A;
@@ -533,27 +558,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
   useEffect(() => { setMobileMenuOpen(false); }, [tab]);
   useEffect(() => {
     try { localStorage.setItem("portfolio_ui", JSON.stringify(ui)); } catch {}
-    const root = document.documentElement;
-    root.style.setProperty("--font-scale", String(ui.fontScale || 1));
-    // Apply dark mode by overriding core surface variables inline
-    if (ui.dark) {
-      root.style.setProperty("--c-bg", "#000000");
-      root.style.setProperty("--c-text", "#FFFFFF");
-      root.style.setProperty("--c-muted", "rgba(255,255,255,.70)");
-      root.style.setProperty("--c-border", "rgba(255,255,255,.14)");
-      root.style.setProperty("--c-surface", "#0B1220");
-      root.style.setProperty("--c-surface2", "#0A1528");
-      root.style.setProperty("--shadow-card", "0 10px 28px rgba(0,0,0,.35)");
-    } else {
-      // Reset back to light defaults. Theme preset may set these too; this keeps UI toggle deterministic.
-      root.style.setProperty("--c-bg", "#F0F9FF");
-      root.style.setProperty("--c-text", "#1E293B");
-      root.style.setProperty("--c-muted", "#64748B");
-      root.style.setProperty("--c-border", "#CBD5E1");
-      root.style.setProperty("--c-surface", "#FFFFFF");
-      root.style.setProperty("--c-surface2", "#F8FAFC");
-      root.style.setProperty("--shadow-card", "0 10px 30px rgba(2,6,23,.06)");
-    }
+    applyUiVars(ui);
   }, [ui]);
 
   const setFontPercent = (pct) => {
@@ -574,7 +579,9 @@ function Portfolio({ password, role, hospital, onLogout }) {
   useEffect(() => {
     // Apply theme based on current access code (per-hospital)
     applyTheme(data?.theme_preset || "confident", data?.theme_overrides || "");
-  }, [data?.theme_preset, data?.theme_overrides]);
+    // Theme presets also set colors, so re-apply user dark/font preferences after theme changes.
+    applyUiVars(ui);
+  }, [data?.theme_preset, data?.theme_overrides, ui]);
   useEffect(() => {
     const t = data?.profile?.site_title;
     if (t) document.title = t;
@@ -602,7 +609,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"var(--font-base)" }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"var(--font-base)", zoom:"var(--font-scale, 1)" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
@@ -615,6 +622,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --c-white: #FFFFFF;
           --c-bg: #F0F9FF;
           --c-text: #1E293B;
+          --c-heading: #0B2447;
           --c-muted: #64748B;
           --c-border: #CBD5E1;
           --c-surface: #FFFFFF;
@@ -630,8 +638,8 @@ function Portfolio({ password, role, hospital, onLogout }) {
           --shadow-card: 0 10px 30px rgba(2,6,23,.06);
           --shadow-modal: 0 24px 64px rgba(0,0,0,.25);
         }
-        body { font-family: var(--font-base); font-size: calc(14px * var(--font-scale, 1)); }
-        button, input, textarea, select { font-size: calc(13px * var(--font-scale, 1)); }
+        body { font-family: var(--font-base); font-size: 14px; background: var(--c-bg); color: var(--c-text); }
+        button, input, textarea, select { font-size: 13px; }
         .card { transition: transform .2s, box-shadow .2s; box-shadow: var(--shadow-card)!important; border-radius: var(--radius-card)!important; }
         .card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.10)!important; }
         .edit-btn { opacity:0; transition:opacity .2s; }
@@ -799,7 +807,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
             boxShadow:"0 24px 64px rgba(0,0,0,.22)",
           }}>
             <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${C.border}` }}>
-              <div style={{ color:C.navy, fontWeight:700, fontSize:13 }}>{isEn ? "Menu" : "เมนู"}</div>
+              <div style={{ color:C.heading, fontWeight:700, fontSize:13 }}>{isEn ? "Menu" : "เมนู"}</div>
               <button onClick={() => setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:18 }}>✕</button>
             </div>
             <div style={{ padding:"10px 10px", display:"flex", gap:8, flexWrap:"wrap", borderBottom:`1px solid ${C.border}` }}>
@@ -837,7 +845,7 @@ function Portfolio({ password, role, hospital, onLogout }) {
                     textAlign:"left",
                     width:"100%",
                     border:"1px solid " + (tab===t.id ? C.teal : C.border),
-                    background: tab===t.id ? "rgba(12,123,147,.08)" : "#fff",
+                    background: tab===t.id ? "rgba(12,123,147,.08)" : C.surface,
                     color: tab===t.id ? C.teal : C.text,
                     borderRadius:12,
                     padding:"10px 12px",
@@ -1093,13 +1101,13 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                 <a href={p.booking_url} target="_blank" rel="noreferrer" style={{
                   fontSize:12, padding:"6px 10px", borderRadius:999,
                   border:`1px solid ${C.border}`, color:C.text, textDecoration:"none",
-                  background:"#fff",
+                  background:C.surface,
                 }}>
                   {isEn ? "Open booking page in a new tab ↗" : "เปิดหน้าจองในแท็บใหม่ ↗"}
                 </a>
               )}
             </div>
-            <div style={{ position:"relative", width:"100%", height:"70vh", borderRadius:12, overflow:"hidden", border:`1px solid ${C.border}`, background:"#fff" }}>
+            <div style={{ position:"relative", width:"100%", height:"70vh", borderRadius:12, overflow:"hidden", border:`1px solid ${C.border}`, background:C.surface }}>
               {p.booking_url ? (
                 <iframe
                   src={p.booking_url}
@@ -1123,7 +1131,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
             ) : (
               <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
                 {awardsDraft.map((a, idx) => (
-                  <div key={idx} style={{ border:`1px solid ${C.border}`, borderRadius:12, padding:14, background:"#F8FAFC" }}>
+                  <div key={idx} style={{ border:`1px solid ${C.border}`, borderRadius:12, padding:14, background:C.surface2 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                       <div style={{ fontSize:12, color:C.muted, fontWeight:600 }}>รายการ #{idx + 1}</div>
                       {btn("ลบ", () => setAwardsDraft(list => list.filter((_, i) => i !== idx)), { background:C.danger, color:"#fff", fontSize:11, padding:"4px 10px" })}
@@ -1164,7 +1172,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
 
       {/* Headline */}
       <div style={{
-        background:"#fff", borderRadius:"var(--radius-card)", padding:"18px 24px", marginBottom:20,
+        background:C.surface, borderRadius:"var(--radius-card)", padding:"18px 24px", marginBottom:20,
         border:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:12,
       }} className="edit-wrap">
         <span style={{ fontSize:18 }}>💼</span>
@@ -1173,22 +1181,22 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       </div>
 
       {/* Bio paragraphs */}
-      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"28px 32px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+      <div style={{ background:C.surface, borderRadius:"var(--radius-card)", padding:"28px 32px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Bio" : "ประวัติส่วนตัว"}</h2>
+          <h2 style={{ color:C.heading, fontSize:16, margin:0 }}>{isEn ? "Bio" : "ประวัติส่วนตัว"}</h2>
         </div>
         {["bio","bio2","bio3"].map((key) => (
           <div key={key} className="edit-wrap" style={{ display:"flex", gap:8, marginBottom:14, alignItems:"flex-start" }}>
-            <p style={{ color:"#374151", lineHeight:1.9, fontSize:14, margin:0, flex:1 }}>{pick(key)}</p>
+            <p style={{ color:C.text, lineHeight:1.9, fontSize:14, margin:0, flex:1 }}>{pick(key)}</p>
             {isAdmin && btn("✏", () => setEditing({ key: isEn ? `${key}_en` : key, value: pick(key) }), { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"3px 8px" })}
           </div>
         ))}
       </div>
 
       {/* Awards */}
-      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+      <div style={{ background:C.surface, borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }} className="edit-wrap">
-          <h2 style={{ color:C.navy, fontSize:16, margin:0 }}>{isEn ? "Awards / Achievements" : "ผลงานที่เคยได้รับ"}</h2>
+          <h2 style={{ color:C.heading, fontSize:16, margin:0 }}>{isEn ? "Awards / Achievements" : "ผลงานที่เคยได้รับ"}</h2>
           {isAdmin && btn("แก้ไข", openAwardsEditor, { background:"transparent", border:`1px solid ${C.border}`, color:C.muted, fontSize:11, padding:"6px 10px" })}
         </div>
         {awards.length === 0 ? (
@@ -1203,7 +1211,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                 const canWatch = !!ytEmbed;
                 const thumbSrc = a?.image || ytThumb;
                 return (
-              <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:"#F8FAFC", border:`1px solid ${C.border}` }}>
+              <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"12px 14px", borderRadius:12, background:C.surface2, border:`1px solid ${C.border}` }}>
                 {thumbSrc ? (
                   <img
                     src={thumbSrc}
@@ -1212,7 +1220,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
                     onClick={() => setViewImg({ src: thumbSrc, title: a?.title || (isEn ? "Award" : "ผลงาน") })}
                   />
                 ) : (
-                  <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", color:C.muted, fontSize:18 }}>🏅</div>
+                  <div style={{ width:52, height:52, borderRadius:10, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", background:C.surface, color:C.muted, fontSize:18 }}>🏅</div>
                 )}
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text, marginBottom:4, wordBreak:"break-word" }}>
@@ -1249,8 +1257,8 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
       </div>
 
       {/* Contact */}
-      <div style={{ background:"#fff", borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}` }}>
-        <h2 style={{ color:C.navy, fontSize:16, margin:"0 0 16px" }}>Contact</h2>
+      <div style={{ background:C.surface, borderRadius:"var(--radius-card)", padding:"24px 28px", border:`1px solid ${C.border}` }}>
+        <h2 style={{ color:C.heading, fontSize:16, margin:"0 0 16px" }}>Contact</h2>
         <div className="contact-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           {[
             { icon:<GmailIcon />, label:"Email", key:"email" },
@@ -1262,7 +1270,7 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
           ].map(f => (
             <div key={f.key} className="edit-wrap" style={{
               display:"flex", gap:12, padding:"12px 16px", borderRadius:10,
-              background:"#F8FAFC", border:`1px solid ${C.border}`, alignItems:"flex-start",
+              background:C.surface2, border:`1px solid ${C.border}`, alignItems:"flex-start",
             }}>
               {typeof f.icon === "string"
                 ? <span style={{ fontSize:18, flexShrink:0 }}>{f.icon}</span>
@@ -1332,8 +1340,8 @@ function AboutTab({ profile: p, isAdmin, onSave, password, lang }) {
 
       {/* Admin: Edit all fields table */}
       {isAdmin && (
-        <div style={{ marginTop:24, background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}` }}>
-          <h3 style={{ color:C.navy, fontSize:15, margin:"0 0 16px" }}>✏ แก้ไขประวัติทั้งหมด</h3>
+        <div style={{ marginTop:24, background:C.surface, borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}` }}>
+          <h3 style={{ color:C.heading, fontSize:15, margin:"0 0 16px" }}>✏ แก้ไขประวัติทั้งหมด</h3>
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {fields.map(f => (
               <div key={f.key} style={{ display:"grid", gridTemplateColumns:"160px 1fr auto", gap:10, alignItems:"center" }}>
@@ -1439,14 +1447,14 @@ function ProjectsTab({ projects, isAdmin, password, lang, onRefresh, showToast }
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-        <h2 style={{ color:C.navy, margin:0, fontSize:20, letterSpacing:.2 }}>Clinical Digital Tools</h2>
+        <h2 style={{ color:C.heading, margin:0, fontSize:20, letterSpacing:.2 }}>Clinical Digital Tools</h2>
         {isAdmin && btn(isEn ? "+ Add project" : "+ เพิ่ม Project", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
       <div className="projects-grid" style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
         {visible.map(p => (
           <div key={p.id} className="card" style={{
-            background:"#fff", borderRadius:18, overflow:"hidden",
+            background:C.surface, borderRadius:18, overflow:"hidden",
             border:`1px solid ${C.border}`, boxShadow:"0 10px 30px rgba(2,6,23,.06)",
             opacity: (!p.visible && isAdmin) ? .55 : 1,
           }}>
@@ -1489,7 +1497,7 @@ function ProjectsTab({ projects, isAdmin, password, lang, onRefresh, showToast }
             <div style={{ padding:"18px 20px 18px" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:10 }}>
                 <div style={{ minWidth:0 }}>
-                  <h3 style={{ color:C.navy, fontSize:15, margin:0, lineHeight:1.3 }}>
+                  <h3 style={{ color:C.heading, fontSize:15, margin:0, lineHeight:1.3 }}>
                     {!p.image_url ? (pick(p, "title") || p.title || "—") : null}
                     {isAdmin && !p.visible && <span style={{ color:C.muted, fontSize:11, marginLeft:8 }}>[ซ่อน]</span>}
                   </h3>
@@ -1510,7 +1518,7 @@ function ProjectsTab({ projects, isAdmin, password, lang, onRefresh, showToast }
                 </div>
               </div>
 
-              <p style={{ color:"#334155", fontSize:13.5, lineHeight:1.75, margin:"0 0 12px" }}>
+              <p style={{ color:C.text, fontSize:13.5, lineHeight:1.75, margin:"0 0 12px" }}>
                 {pick(p, "description") || p.description || ""}
               </p>
 
@@ -1648,12 +1656,12 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-        <h2 style={{ color:C.navy, margin:0, fontSize:20 }}>{isEn ? "Articles" : "บทความ"}</h2>
+        <h2 style={{ color:C.heading, margin:0, fontSize:20 }}>{isEn ? "Articles" : "บทความ"}</h2>
         {isAdmin && btn(isEn ? "+ Add article" : "+ เพิ่มบทความ", openNew, { background:C.teal, color:"#fff" })}
       </div>
 
       {visible.length === 0 && (
-        <div style={{ background:"#fff", borderRadius:12, padding:"40px", textAlign:"center", color:C.muted, border:`1px solid ${C.border}` }}>
+        <div style={{ background:C.surface, borderRadius:12, padding:"40px", textAlign:"center", color:C.muted, border:`1px solid ${C.border}` }}>
           {isEn ? "No articles yet" : "ยังไม่มีบทความ"}
         </div>
       )}
@@ -1661,7 +1669,7 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
       <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
         {visible.map(a => (
           <div key={a.id} className="card" style={{
-            background:"#fff", borderRadius:14, padding:"22px 26px",
+            background:C.surface, borderRadius:14, padding:"22px 26px",
             border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,.04)",
             opacity: (!a.published && isAdmin) ? .6 : 1,
           }}>
@@ -1671,7 +1679,7 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
                   {!a.published && isAdmin && (
                     <span style={{ background:"#FEF3C7", color:"#92400E", fontSize:10, padding:"2px 8px", borderRadius:20 }}>Draft</span>
                   )}
-                  <h3 style={{ color:C.navy, margin:0, fontSize:15, cursor:"pointer" }} onClick={() => setReading(a)}>
+                  <h3 style={{ color:C.heading, margin:0, fontSize:15, cursor:"pointer" }} onClick={() => setReading(a)}>
                     {pick(a, "title") || a.title || "—"}
                   </h3>
                 </div>
@@ -1826,19 +1834,19 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
 
   return (
     <div>
-      <h2 style={{ color:C.navy, fontSize:20, marginTop:0, marginBottom:24 }}>⚙ Admin Panel</h2>
+      <h2 style={{ color:C.heading, fontSize:20, marginTop:0, marginBottom:24 }}>⚙ Admin Panel</h2>
 
       {/* Passwords table */}
-      <div style={{ background:"#fff", borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
+      <div style={{ background:C.surface, borderRadius:16, padding:"24px 28px", border:`1px solid ${C.border}`, marginBottom:24 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <h3 style={{ color:C.navy, margin:0, fontSize:15 }}>🔑 รหัสผ่านแต่ละโรงพยาบาล</h3>
+          <h3 style={{ color:C.heading, margin:0, fontSize:15 }}>🔑 รหัสผ่านแต่ละโรงพยาบาล</h3>
           {btn("+ เพิ่มรหัส", () => setAdding(true), { background:C.teal, color:"#fff" })}
         </div>
 
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
             <thead>
-              <tr style={{ background:"#F8FAFC" }}>
+              <tr style={{ background:C.surface2 }}>
                 {["โรงพยาบาล","รหัสผ่าน","Role","หมายเหตุ","เข้าล่าสุด","ธีม","ลิงก์/QR",""].map((h,i) => (
                   <th key={i} style={{ padding:"10px 14px", textAlign:"left", color:C.muted, fontSize:11, letterSpacing:.5, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                 ))}
@@ -1862,7 +1870,7 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
                     <select
                       value={p.theme_preset || "confident"}
                       onChange={(e) => updateRow(p, { theme_preset: e.target.value })}
-                      style={{ padding:"6px 10px", border:`1px solid ${C.border}`, borderRadius:10, fontSize:12, fontFamily:"inherit", background:"#fff" }}
+                      style={{ padding:"6px 10px", border:`1px solid ${C.border}`, borderRadius:10, fontSize:12, fontFamily:"inherit", background:C.surface, color:C.text }}
                     >
                       <option value="sweet">โทนอ่อนหวาน</option>
                       <option value="strong">โทนเข้มแข็ง</option>
@@ -1899,7 +1907,7 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
                 style={{ width:260, height:260, borderRadius:12, border:`1px solid ${C.border}`, background:"#fff" }}
               />
             </div>
-            <div style={{ fontFamily:"monospace", fontSize:12, wordBreak:"break-all", padding:"10px 12px", border:`1px solid ${C.border}`, borderRadius:10, background:"#F8FAFC" }}>
+            <div style={{ fontFamily:"monospace", fontSize:12, wordBreak:"break-all", padding:"10px 12px", border:`1px solid ${C.border}`, borderRadius:10, background:C.surface2, color:C.text }}>
               {qrFor.url}
             </div>
             <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
@@ -1933,7 +1941,7 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
               <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>ธีม (Theme)</div>
               <select value={form.theme_preset || "confident"} onChange={e => setForm(f=>({...f,theme_preset:e.target.value}))} style={{
                 width:"100%", padding:"9px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:"inherit",
-                background:"#fff", color:C.text,
+                background:C.surface, color:C.text,
               }}>
                 <option value="sweet">โทนอ่อนหวาน</option>
                 <option value="strong">โทนเข้มแข็ง</option>
