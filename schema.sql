@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS articles (
   title TEXT NOT NULL,
   content TEXT DEFAULT '',           -- markdown / rich text
   summary TEXT DEFAULT '',
+  external_url TEXT DEFAULT '',
+  external_label TEXT DEFAULT '',
+  external_label_en TEXT DEFAULT '',
+  source_type TEXT DEFAULT 'website',
   published INTEGER DEFAULT 0,       -- 0=draft, 1=published
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))

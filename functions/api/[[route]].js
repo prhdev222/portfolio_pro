@@ -253,7 +253,7 @@ export async function onRequest(context) {
       if (!id && request.method === 'POST') {
         const d = await request.json();
         const r = await DB.prepare(
-          'INSERT INTO articles (title, title_en, content, content_en, summary, summary_en, published) VALUES (?,?,?,?,?,?,?)'
+          'INSERT INTO articles (title, title_en, content, content_en, summary, summary_en, external_url, external_label, external_label_en, source_type, published) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
         ).bind(
           d.title,
           d.title_en || '',
@@ -261,6 +261,10 @@ export async function onRequest(context) {
           d.content_en || '',
           d.summary || '',
           d.summary_en || '',
+          d.external_url || '',
+          d.external_label || '',
+          d.external_label_en || '',
+          d.source_type || 'website',
           d.published ? 1 : 0
         ).run();
         return json({ id: r.meta.last_row_id });
@@ -269,7 +273,7 @@ export async function onRequest(context) {
       if (id && request.method === 'PUT') {
         const d = await request.json();
         await DB.prepare(
-          'UPDATE articles SET title=?,title_en=?,content=?,content_en=?,summary=?,summary_en=?,published=?,updated_at=datetime("now") WHERE id=?'
+          'UPDATE articles SET title=?,title_en=?,content=?,content_en=?,summary=?,summary_en=?,external_url=?,external_label=?,external_label_en=?,source_type=?,published=?,updated_at=datetime("now") WHERE id=?'
         ).bind(
           d.title,
           d.title_en || '',
@@ -277,6 +281,10 @@ export async function onRequest(context) {
           d.content_en || '',
           d.summary || '',
           d.summary_en || '',
+          d.external_url || '',
+          d.external_label || '',
+          d.external_label_en || '',
+          d.source_type || 'website',
           d.published ? 1 : 0,
           id
         ).run();

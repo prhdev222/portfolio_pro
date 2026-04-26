@@ -1638,6 +1638,14 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
     if (isEn) return (a[`${key}_en`] || "").trim();
     return (a[key] || "").trim();
   };
+  const sourceLabel = (a) => {
+    const custom = isEn ? (a.external_label_en || "").trim() : (a.external_label || "").trim();
+    if (custom) return custom;
+    const type = (a.source_type || "website").toLowerCase();
+    if (type === "notion") return isEn ? "Read in Notion" : "อ่านต่อใน Notion";
+    if (type === "obsidian") return isEn ? "Open in Obsidian" : "เปิดใน Obsidian";
+    return isEn ? "Open source" : "เปิดลิงก์ต้นทาง";
+  };
   const [translating, setTranslating] = useState(null); // key
 
   const translateToEn = async (key) => {
@@ -1657,7 +1665,13 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
   };
 
   const openNew = () => {
-    setForm({ title:"", title_en:"", content:"", content_en:"", summary:"", summary_en:"", published:false });
+    setForm({
+      title:"", title_en:"",
+      content:"", content_en:"",
+      summary:"", summary_en:"",
+      external_url:"", external_label:"", external_label_en:"", source_type:"website",
+      published:false,
+    });
     setEditing("new");
   };
   const openEdit = a => { setForm({...a}); setEditing(a.id); };
@@ -1716,10 +1730,38 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
                     {pick(a, "summary")}
                   </p>
                 )}
-                <div style={{ color:C.border, fontSize:11 }}>{a.updated_at?.slice(0,10) || a.created_at?.slice(0,10)}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                  <div style={{ color:C.border, fontSize:11 }}>{a.updated_at?.slice(0,10) || a.created_at?.slice(0,10)}</div>
+                  {a.external_url && (
+                    <span style={{
+                      fontSize:10,
+                      padding:"2px 8px",
+                      borderRadius:999,
+                      background:"rgba(12,123,147,.08)",
+                      color:C.teal,
+                      border:`1px solid ${C.border}`,
+                    }}>
+                      {(a.source_type || "website").toUpperCase()}
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:16 }}>
                 {btn("อ่าน", () => setReading(a), { background:C.blue, color:"#fff", fontSize:11 })}
+                {a.external_url && (
+                  <a href={asHttpUrl(a.external_url)} target="_blank" rel="noreferrer" style={{
+                    fontSize:11,
+                    padding:"7px 10px",
+                    borderRadius:"var(--radius-btn, 12px)",
+                    background:C.surface2,
+                    color:C.teal,
+                    border:`1px solid ${C.border}`,
+                    textDecoration:"none",
+                    whiteSpace:"nowrap",
+                  }}>
+                    {sourceLabel(a)} ↗
+                  </a>
+                )}
                 {isAdmin && btn("✏", () => openEdit(a), { background:C.teal, color:"#fff", fontSize:11 })}
                 {isAdmin && btn("✕", () => del(a.id), { background:C.danger, color:"#fff", fontSize:11, padding:"7px 8px" })}
               </div>
@@ -1731,8 +1773,24 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
       {/* Reading modal */}
       {reading && (
         <EditOverlay title={(pick(reading, "title") || reading.title)} onClose={() => setReading(null)}>
-          <div style={{ color:C.text, fontSize:14, lineHeight:1.9, whiteSpace:"pre-wrap", maxHeight:"60vh", overflowY:"auto" }}>
-            {pick(reading, "content") || reading.content || (isEn ? "(No content)" : "(ไม่มีเนื้อหา)")}
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            <div style={{ color:C.text, fontSize:14, lineHeight:1.9, whiteSpace:"pre-wrap", maxHeight:"60vh", overflowY:"auto" }}>
+              {pick(reading, "content") || reading.content || (isEn ? "(No content)" : "(ไม่มีเนื้อหา)")}
+            </div>
+            {reading.external_url && (
+              <div style={{ display:"flex", justifyContent:"flex-end" }}>
+                <a href={asHttpUrl(reading.external_url)} target="_blank" rel="noreferrer" style={{
+                  fontSize:12,
+                  padding:"8px 12px",
+                  borderRadius:999,
+                  background:C.teal,
+                  color:"#fff",
+                  textDecoration:"none",
+                }}>
+                  {sourceLabel(reading)} ↗
+                </a>
+              </div>
+            )}
           </div>
         </EditOverlay>
       )}
@@ -1770,6 +1828,43 @@ function ArticlesTab({ articles, isAdmin, password, lang, onRefresh, showToast }
             <div>
               <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>Summary (EN)</div>
               {inp(form.summary_en||"", v => setForm(f=>({...f,summary_en:v})), "Short summary...", true, 2)}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:10 }}>
+              <div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{isEn ? "Source type" : "ชนิดลิงก์"}</div>
+                <select
+                  value={form.source_type || "website"}
+                  onChange={e => setForm(f=>({...f,source_type:e.target.value}))}
+                  style={{
+                    width:"100%",
+                    padding:"9px 12px",
+                    border:`1px solid ${C.border}`,
+                    borderRadius:8,
+                    fontSize:13,
+                    fontFamily:"inherit",
+                    background:C.surface,
+                    color:C.text,
+                  }}
+                >
+                  <option value="website">Website</option>
+                  <option value="notion">Notion</option>
+                  <option value="obsidian">Obsidian</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{isEn ? "External URL" : "ลิงก์ภายนอก"}</div>
+                {inp(form.external_url||"", v => setForm(f=>({...f,external_url:v})), "https://...")}
+              </div>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:10 }}>
+              <div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{isEn ? "Button label (TH)" : "ชื่อปุ่ม (TH)"}</div>
+                {inp(form.external_label||"", v => setForm(f=>({...f,external_label:v})), "อ่านต่อใน Notion")}
+              </div>
+              <div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:4 }}>{isEn ? "Button label (EN)" : "ชื่อปุ่ม (EN)"}</div>
+                {inp(form.external_label_en||"", v => setForm(f=>({...f,external_label_en:v})), "Read in Notion")}
+              </div>
             </div>
             <div>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginBottom:4 }}>
