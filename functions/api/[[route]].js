@@ -151,6 +151,22 @@ export async function onRequest(context) {
       });
     }
 
+    // ── GET /api/menu (public, visible links only) ────────────────────
+    if (path === 'menu' && request.method === 'GET') {
+      const auth = await getAuth(request, DB, env);
+      const where = auth?.role === 'admin' ? '' : 'WHERE visible=1';
+      const rows = await DB.prepare(
+        `SELECT * FROM menu_links ${where} ORDER BY favorite DESC, sort_order ASC, title ASC`
+      ).all();
+      return json({
+        links: rows.results.map(link => ({
+          ...link,
+          keywords: JSON.parse(link.keywords || '[]'),
+        })),
+        role: auth?.role || 'viewer',
+      });
+    }
+
     // ── GET /api/admin/content  (admin only — includes unpublished) ─────
     if (path === 'admin/content' && request.method === 'GET') {
       const auth = await getAuth(request, DB, env);
@@ -242,6 +258,51 @@ export async function onRequest(context) {
 
       if (id && request.method === 'DELETE') {
         await DB.prepare('DELETE FROM projects WHERE id=?').bind(id).run();
+        return json({ ok: true });
+      }
+    }
+
+    // ── Menu links ──────────────────────────────────────────────────────
+    if (segments[0] === 'menu-links') {
+      const id = segments[1];
+
+      if (!id && request.method === 'POST') {
+        const d = await request.json();
+        const r = await DB.prepare(
+          'INSERT INTO menu_links (title,url,description,category,keywords,favorite,visible,sort_order) VALUES (?,?,?,?,?,?,?,?)'
+        ).bind(
+          d.title,
+          d.url,
+          d.description || '',
+          d.category || 'Other',
+          JSON.stringify(d.keywords || []),
+          d.favorite ? 1 : 0,
+          d.visible === false ? 0 : 1,
+          d.sort_order || 0
+        ).run();
+        return json({ id: r.meta.last_row_id });
+      }
+
+      if (id && request.method === 'PUT') {
+        const d = await request.json();
+        await DB.prepare(
+          'UPDATE menu_links SET title=?,url=?,description=?,category=?,keywords=?,favorite=?,visible=?,sort_order=?,updated_at=datetime("now") WHERE id=?'
+        ).bind(
+          d.title,
+          d.url,
+          d.description || '',
+          d.category || 'Other',
+          JSON.stringify(d.keywords || []),
+          d.favorite ? 1 : 0,
+          d.visible === false ? 0 : 1,
+          d.sort_order || 0,
+          id
+        ).run();
+        return json({ ok: true });
+      }
+
+      if (id && request.method === 'DELETE') {
+        await DB.prepare('DELETE FROM menu_links WHERE id=?').bind(id).run();
         return json({ ok: true });
       }
     }

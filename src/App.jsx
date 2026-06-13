@@ -730,6 +730,18 @@ function Portfolio({ password, role, hospital, onLogout }) {
           ))}
         </nav>
         <div className="desktop-actions" style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <a href="/secondbrain" style={{
+            color:"rgba(255,255,255,.85)",
+            border:"1px solid rgba(255,255,255,.18)",
+            background:"rgba(255,255,255,.08)",
+            borderRadius:999,
+            padding:"6px 10px",
+            fontSize:11,
+            textDecoration:"none",
+            whiteSpace:"nowrap",
+          }}>
+            Second Brain
+          </a>
           {btn(ui.dark ? (isEn ? "Light" : "สว่าง") : (isEn ? "Dark" : "มืด"), () => setUi(u => ({ ...u, dark: !u.dark })), {
             background:"rgba(255,255,255,.08)",
             border:`1px solid rgba(255,255,255,.18)`,
@@ -855,6 +867,22 @@ function Portfolio({ password, role, hospital, onLogout }) {
               </div>
             </div>
             <div style={{ padding:"10px 10px", display:"flex", flexDirection:"column", gap:6 }}>
+              <a
+                href="/secondbrain"
+                style={{
+                  textAlign:"left",
+                  width:"100%",
+                  border:`1px solid ${C.border}`,
+                  background:C.surface,
+                  color:C.text,
+                  borderRadius:12,
+                  padding:"10px 12px",
+                  fontSize:13,
+                  textDecoration:"none",
+                }}
+              >
+                Second Brain
+              </a>
               {TABS.map(t => (
                 <button
                   key={t.id}
@@ -2091,6 +2119,348 @@ function AdminTab({ passwords, password, onRefresh, showToast }) {
   );
 }
 
+// ─── SECOND BRAIN MENU ───────────────────────────────────────────────────────
+const normalizeUrl = (raw) => {
+  const value = (raw || "").trim();
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+};
+
+const displayHost = (raw) => {
+  try {
+    return new URL(normalizeUrl(raw)).hostname.replace(/^www\./, "");
+  } catch {
+    return raw || "";
+  }
+};
+
+const MENU_PREVIEW_LINKS = [
+  { id: 1, title: "Notes", url: "notes.uraree.com", description: "Daily notes, drafts, and ideas I want to find again.", category: "Knowledge", keywords: ["memo", "writing", "ideas"], favorite: 1, visible: 1, sort_order: 1 },
+  { id: 2, title: "Mind map", url: "mindmap.uraree.com", description: "Visual thinking and connections between topics.", category: "Knowledge", keywords: ["brainstorm", "map", "concept"], favorite: 1, visible: 1, sort_order: 2 },
+  { id: 3, title: "Law library", url: "law.uraree.com", description: "Legal references and documents.", category: "Reference", keywords: ["legal", "rules", "documents"], favorite: 0, visible: 1, sort_order: 3 },
+  { id: 4, title: "Digital library", url: "digital-library.uraree.com", description: "Books, papers, and saved reading material.", category: "Reference", keywords: ["books", "papers", "research"], favorite: 0, visible: 1, sort_order: 4 },
+  { id: 5, title: "Monitor", url: "monitor.uraree.com", description: "Service monitoring and operational status.", category: "Infrastructure", keywords: ["health", "server", "status"], favorite: 1, visible: 1, sort_order: 5 },
+  { id: 6, title: "Uptime", url: "uptime.uraree.com", description: "Public uptime checks for active projects.", category: "Infrastructure", keywords: ["availability", "status", "health"], favorite: 0, visible: 1, sort_order: 6 },
+  { id: 7, title: "Qdrant", url: "qdrant.uraree.com", description: "Vector search and semantic memory storage.", category: "Infrastructure", keywords: ["vector", "search", "ai"], favorite: 0, visible: 1, sort_order: 7 },
+  { id: 8, title: "Drawing board", url: "draw.uraree.com", description: "Quick diagrams and collaborative sketches.", category: "Creative", keywords: ["diagram", "whiteboard", "sketch"], favorite: 0, visible: 1, sort_order: 8 },
+];
+
+function MenuPage({ password, role = "viewer", onLogout, preview = false }) {
+  const isAdmin = role === "admin";
+  const [links, setLinks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    if (preview) {
+      setLinks(MENU_PREVIEW_LINKS);
+      setLoading(false);
+      return;
+    }
+    const result = await API("menu", {}, password);
+    setLinks(result.links || []);
+    setLoading(false);
+  }, [password, preview]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { document.title = "Second Brain Menu"; }, []);
+
+  const categories = ["All", ...new Set(links.map(link => link.category || "Other"))];
+  const needle = query.trim().toLocaleLowerCase();
+  const filtered = links.filter(link => {
+    if (category !== "All" && (link.category || "Other") !== category) return false;
+    if (favoritesOnly && !link.favorite) return false;
+    if (!needle) return true;
+    const haystack = [
+      link.title,
+      link.url,
+      displayHost(link.url),
+      link.description,
+      link.category,
+      ...(Array.isArray(link.keywords) ? link.keywords : []),
+    ].join(" ").toLocaleLowerCase();
+    return haystack.includes(needle);
+  });
+
+  const openNew = () => {
+    setForm({
+      title: "",
+      url: "",
+      description: "",
+      category: "",
+      keywords: "",
+      favorite: false,
+      visible: true,
+      sort_order: 0,
+    });
+    setEditing("new");
+  };
+
+  const openEdit = (link) => {
+    setForm({
+      ...link,
+      keywords: Array.isArray(link.keywords) ? link.keywords.join(", ") : "",
+    });
+    setEditing(link.id);
+  };
+
+  const save = async () => {
+    if (!form.title?.trim() || !form.url?.trim()) return;
+    const payload = {
+      ...form,
+      title: form.title.trim(),
+      url: normalizeUrl(form.url),
+      category: form.category.trim() || "Other",
+      keywords: (form.keywords || "").split(",").map(v => v.trim()).filter(Boolean),
+    };
+    if (preview) {
+      setLinks(current => {
+        if (editing === "new") {
+          return [...current, { ...payload, id: Date.now() }];
+        }
+        return current.map(link => link.id === editing ? { ...link, ...payload } : link);
+      });
+      setEditing(null);
+      return;
+    }
+    const endpoint = editing === "new" ? "menu-links" : `menu-links/${editing}`;
+    await API(endpoint, {
+      method: editing === "new" ? "POST" : "PUT",
+      body: JSON.stringify(payload),
+    }, password);
+    setEditing(null);
+    load();
+  };
+
+  const del = async (id) => {
+    if (!confirm("Delete this link?")) return;
+    if (preview) {
+      setLinks(current => current.filter(link => link.id !== id));
+      if (editing === id) setEditing(null);
+      return;
+    }
+    await API(`menu-links/${id}`, { method: "DELETE" }, password);
+    if (editing === id) setEditing(null);
+    load();
+  };
+
+  return (
+    <div className="brain-shell">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
+        :root {
+          --brain-ink: #12233f;
+          --brain-paper: #f4f8fb;
+          --brain-surface: #fbfdfe;
+          --brain-inset: #eaf1f5;
+          --brain-line: rgba(18,35,63,.14);
+          --brain-muted: #647386;
+          --brain-marker: #087f8c;
+          --brain-marker-soft: rgba(8,127,140,.09);
+          --brain-danger: #b42318;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        .brain-shell { min-height: 100vh; background: var(--brain-paper); color: var(--brain-ink); font-family: 'Sarabun', system-ui, sans-serif; }
+        .brain-header { height: 64px; border-bottom: 1px solid var(--brain-line); background: var(--brain-paper); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 20; }
+        .brain-brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+        .brain-brand strong { font-size: 15px; white-space: nowrap; }
+        .brain-brand span { color: var(--brain-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .brain-actions { display: flex; gap: 8px; align-items: center; }
+        .brain-btn { min-height: 36px; border: 1px solid var(--brain-line); border-radius: 7px; padding: 0 12px; background: var(--brain-surface); color: var(--brain-ink); cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
+        .brain-btn:hover { border-color: rgba(8,127,140,.45); color: var(--brain-marker); }
+        .brain-btn:focus-visible, .brain-search:focus-visible { outline: 3px solid rgba(8,127,140,.2); outline-offset: 2px; }
+        .brain-btn-primary { background: var(--brain-marker); border-color: var(--brain-marker); color: #f8ffff; }
+        .brain-btn-primary:hover { color: #f8ffff; background: #066d78; }
+        .brain-main { width: min(1040px, calc(100% - 40px)); margin: 0 auto; padding: 44px 0 64px; }
+        .brain-title-row { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 22px; }
+        .brain-title-row h1 { font-size: 28px; line-height: 1.2; margin: 0 0 5px; letter-spacing: 0; }
+        .brain-title-row p { margin: 0; color: var(--brain-muted); font-size: 13px; }
+        .brain-command { border: 1px solid var(--brain-line); background: var(--brain-surface); border-radius: 8px; padding: 12px; margin-bottom: 18px; }
+        .brain-search { width: 100%; height: 48px; border: 1px solid transparent; border-radius: 6px; background: var(--brain-inset); color: var(--brain-ink); padding: 0 16px; font: inherit; font-size: 15px; }
+        .brain-search::placeholder { color: #7b8999; }
+        .brain-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .brain-filter { border: 1px solid transparent; background: transparent; color: var(--brain-muted); border-radius: 6px; padding: 6px 9px; cursor: pointer; font: inherit; font-size: 12px; }
+        .brain-filter:hover { background: var(--brain-inset); color: var(--brain-ink); }
+        .brain-filter-active { background: var(--brain-marker-soft); color: var(--brain-marker); border-color: rgba(8,127,140,.18); }
+        .brain-summary { display: flex; justify-content: space-between; color: var(--brain-muted); font-size: 12px; margin: 0 2px 8px; }
+        .brain-list { border-top: 1px solid var(--brain-line); }
+        .brain-row { display: grid; grid-template-columns: minmax(190px, .8fr) minmax(240px, 1.35fr) auto; gap: 24px; align-items: center; min-height: 86px; padding: 14px 12px; border-bottom: 1px solid var(--brain-line); text-decoration: none; color: inherit; }
+        .brain-row:hover { background: rgba(251,253,254,.72); }
+        .brain-name { min-width: 0; }
+        .brain-name strong { display: block; font-size: 14px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .brain-host { color: var(--brain-marker); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+        .brain-description { color: var(--brain-muted); font-size: 12px; line-height: 1.55; min-width: 0; }
+        .brain-meta { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+        .brain-category { color: var(--brain-muted); font-size: 11px; background: var(--brain-inset); padding: 4px 8px; border-radius: 5px; white-space: nowrap; }
+        .brain-star { color: #a76b00; font-size: 14px; }
+        .brain-admin-actions { display: flex; gap: 5px; }
+        .brain-icon-btn { width: 30px; height: 30px; border: 1px solid var(--brain-line); border-radius: 6px; background: var(--brain-surface); cursor: pointer; color: var(--brain-muted); }
+        .brain-icon-btn:hover { color: var(--brain-marker); border-color: rgba(8,127,140,.4); }
+        .brain-empty { padding: 72px 20px; text-align: center; color: var(--brain-muted); border-bottom: 1px solid var(--brain-line); }
+        .brain-dialog-backdrop { position: fixed; inset: 0; background: rgba(18,35,63,.42); z-index: 50; display: grid; place-items: center; padding: 20px; }
+        .brain-dialog { width: min(560px, 100%); max-height: 90vh; overflow: auto; background: var(--brain-surface); border: 1px solid var(--brain-line); border-radius: 8px; padding: 24px; }
+        .brain-dialog h2 { margin: 0 0 20px; font-size: 18px; }
+        .brain-form { display: grid; gap: 14px; }
+        .brain-field label { display: block; color: var(--brain-muted); font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .brain-field input, .brain-field textarea { width: 100%; border: 1px solid var(--brain-line); border-radius: 6px; background: var(--brain-inset); color: var(--brain-ink); padding: 10px 11px; font: inherit; font-size: 13px; }
+        .brain-field textarea { min-height: 74px; resize: vertical; }
+        .brain-form-grid { display: grid; grid-template-columns: 1fr 100px; gap: 12px; }
+        .brain-checks { display: flex; gap: 18px; color: var(--brain-ink); font-size: 12px; }
+        .brain-dialog-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; }
+        @media (max-width: 700px) {
+          .brain-header { padding: 0 14px; }
+          .brain-brand span, .brain-logout-label { display: none; }
+          .brain-main { width: min(100% - 24px, 1040px); padding-top: 28px; }
+          .brain-title-row { align-items: flex-start; }
+          .brain-title-row h1 { font-size: 23px; }
+          .brain-row { grid-template-columns: 1fr auto; gap: 8px 12px; padding: 15px 8px; }
+          .brain-description { grid-column: 1 / -1; }
+          .brain-meta { grid-column: 2; grid-row: 1; }
+          .brain-category { display: none; }
+          .brain-form-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <header className="brain-header">
+        <div className="brain-brand">
+          <strong>Second Brain</strong>
+          <span>{preview ? "Local preview" : "uraree.com/secondbrain"}</span>
+        </div>
+        <div className="brain-actions">
+          <button className="brain-btn" onClick={() => { window.location.href = "/"; }}>Portfolio</button>
+          {!preview && isAdmin && <button className="brain-btn" onClick={onLogout}><span className="brain-logout-label">Logout</span></button>}
+        </div>
+      </header>
+
+      <main className="brain-main">
+        <div className="brain-title-row">
+          <div>
+            <h1>Find a project</h1>
+            <p>Search by name, subdomain, category, or any keyword you remember.</p>
+          </div>
+          {isAdmin && <button className="brain-btn brain-btn-primary" onClick={openNew}>+ Add link</button>}
+        </div>
+
+        <section className="brain-command" aria-label="Search and filters">
+          <input
+            className="brain-search"
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Try “notes”, “law”, “monitor”, or “research”"
+            autoFocus
+          />
+          <div className="brain-filters">
+            {categories.map(item => (
+              <button
+                key={item}
+                className={`brain-filter ${category === item ? "brain-filter-active" : ""}`}
+                onClick={() => setCategory(item)}
+              >
+                {item}
+              </button>
+            ))}
+            <button
+              className={`brain-filter ${favoritesOnly ? "brain-filter-active" : ""}`}
+              onClick={() => setFavoritesOnly(value => !value)}
+            >
+              Favorites
+            </button>
+          </div>
+        </section>
+
+        <div className="brain-summary">
+          <span>{loading ? "Loading links..." : `${filtered.length} of ${links.length} links`}</span>
+          {query && <span>Search: {query}</span>}
+        </div>
+
+        <div className="brain-list">
+          {!loading && filtered.length === 0 ? (
+            <div className="brain-empty">
+              No link matches this search.{isAdmin ? " Add a new link or try another keyword." : ""}
+            </div>
+          ) : filtered.map(link => (
+            <div className="brain-row" key={link.id}>
+              <a className="brain-name" href={normalizeUrl(link.url)} target="_blank" rel="noreferrer">
+                <strong>{link.title}</strong>
+                <div className="brain-host">{displayHost(link.url)}</div>
+              </a>
+              <div className="brain-description">
+                {link.description || (Array.isArray(link.keywords) ? link.keywords.join(" · ") : "")}
+                {!link.visible && isAdmin ? " (Hidden)" : ""}
+              </div>
+              <div className="brain-meta">
+                {link.favorite ? <span className="brain-star" title="Favorite">★</span> : null}
+                <span className="brain-category">{link.category || "Other"}</span>
+                {isAdmin && (
+                  <div className="brain-admin-actions">
+                    <button className="brain-icon-btn" title="Edit" aria-label={`Edit ${link.title}`} onClick={() => openEdit(link)}>✎</button>
+                    <button className="brain-icon-btn" title="Delete" aria-label={`Delete ${link.title}`} onClick={() => del(link.id)}>×</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {editing !== null && (
+        <div className="brain-dialog-backdrop" onClick={event => event.target === event.currentTarget && setEditing(null)}>
+          <div className="brain-dialog" role="dialog" aria-modal="true" aria-labelledby="brain-dialog-title">
+            <h2 id="brain-dialog-title">{editing === "new" ? "Add link" : "Edit link"}</h2>
+            <div className="brain-form">
+              <div className="brain-field">
+                <label>Project name</label>
+                <input value={form.title || ""} onChange={event => setForm(value => ({ ...value, title: event.target.value }))} placeholder="Notes" />
+              </div>
+              <div className="brain-field">
+                <label>URL or subdomain</label>
+                <input value={form.url || ""} onChange={event => setForm(value => ({ ...value, url: event.target.value }))} placeholder="notes.uraree.com" />
+              </div>
+              <div className="brain-field">
+                <label>Memory cue</label>
+                <textarea value={form.description || ""} onChange={event => setForm(value => ({ ...value, description: event.target.value }))} placeholder="What do you use this project for?" />
+              </div>
+              <div className="brain-form-grid">
+                <div className="brain-field">
+                  <label>Category</label>
+                  <input value={form.category || ""} onChange={event => setForm(value => ({ ...value, category: event.target.value }))} placeholder="Knowledge" />
+                </div>
+                <div className="brain-field">
+                  <label>Order</label>
+                  <input type="number" value={form.sort_order || 0} onChange={event => setForm(value => ({ ...value, sort_order: Number(event.target.value) }))} />
+                </div>
+              </div>
+              <div className="brain-field">
+                <label>Search keywords, separated by commas</label>
+                <input value={form.keywords || ""} onChange={event => setForm(value => ({ ...value, keywords: event.target.value }))} placeholder="memo, writing, ideas" />
+              </div>
+              <div className="brain-checks">
+                <label><input type="checkbox" checked={!!form.favorite} onChange={event => setForm(value => ({ ...value, favorite: event.target.checked }))} /> Favorite</label>
+                <label><input type="checkbox" checked={form.visible !== false} onChange={event => setForm(value => ({ ...value, visible: event.target.checked }))} /> Visible to viewers</label>
+              </div>
+              <div className="brain-dialog-actions">
+                <div>
+                  {editing !== "new" && <button className="brain-btn" style={{ color: "var(--brain-danger)" }} onClick={() => del(editing)}>Delete</button>}
+                </div>
+                <div className="brain-actions">
+                  <button className="brain-btn" onClick={() => setEditing(null)}>Cancel</button>
+                  <button className="brain-btn brain-btn-primary" onClick={save}>Save link</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [session, setSession] = useState(() => {
@@ -2111,6 +2481,9 @@ export default function App() {
     setSession(null);
   };
 
+  const isSecondBrainRoute = window.location.pathname.replace(/\/+$/, "") === "/secondbrain";
+  if (isSecondBrainRoute && import.meta.env.DEV && !session) return <MenuPage password="" role="admin" onLogout={() => {}} preview />;
+  if (isSecondBrainRoute) return <MenuPage password={session?.pw || ""} role={session?.role || "viewer"} onLogout={handleLogout} />;
   if (!session) return <LockScreen onUnlock={handleUnlock} />;
   return <Portfolio password={session.pw} role={session.role} hospital={session.hospital} onLogout={handleLogout} />;
 }
