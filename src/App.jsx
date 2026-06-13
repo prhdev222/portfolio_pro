@@ -2482,7 +2482,7 @@ export default function App() {
   };
 
   const isSecondBrainRoute = window.location.pathname.replace(/\/+$/, "") === "/secondbrain";
-  if (isSecondBrainRoute && import.meta.env.DEV && !session) return <MenuPage password="" role="admin" onLogout={() => {}} preview />;
+  if (isSecondBrainRoute && import.meta.env.DEV && !session) return <MenuPage password="" role="viewer" onLogout={() => {}} preview />;
   if (isSecondBrainRoute) return <MenuPage password={session?.pw || ""} role={session?.role || "viewer"} onLogout={handleLogout} />;
   if (!session) return <LockScreen onUnlock={handleUnlock} />;
   return <Portfolio password={session.pw} role={session.role} hospital={session.hospital} onLogout={handleLogout} />;
